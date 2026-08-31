@@ -1,0 +1,7 @@
+# Arm 2: frozen backbone, photometric augmentation.
+# Table 1 row "frozen / check". Single seed (42) in the paper.
+extends: base.yaml
+name: frozen_aug
+seed: 42
+augmentation:
+  enabled: true

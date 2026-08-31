@@ -1,0 +1,76 @@
+{
+  "_comment": [
+    "The eight checkpoints behind every published number. One row of the results",
+    "table traces to exactly one entry here.",
+    "",
+    "SELECTION RULE, applied uniformly to every arm: among the checkpoints saved on",
+    "even epochs, take the one with the best SYNTHETIC validation rotation error. No",
+    "real-domain measurement informs the choice - lightbox and sunlamp are touched",
+    "once, at evaluation, and never for selection.",
+    "",
+    "TODO before release: fill in `huggingface` with the uploaded path and `sha256`",
+    "with the hash of each file, so a reproducer can verify they have the same",
+    "weights. Compute with: python -c \"import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())\" <ckpt>"
+  ],
+  "study": "Robust in the Wrong Direction: Augmentation and Uncertainty Under Sim-to-Real Shift in Spacecraft Pose Estimation",
+  "selection_metric": "synthetic validation rotation error",
+  "arms": {
+    "frozen_no_aug_seed42": {
+      "config": "frozen_no_aug",
+      "seed": 42,
+      "checkpoint": "1-frozen_no_aug_checkpoint_20260716_0245.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "frozen_aug_seed42": {
+      "config": "frozen_aug",
+      "seed": 42,
+      "checkpoint": "2-frozen_aug_checkpoint_20260719_2026.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "unfrozen_no_aug_seed42": {
+      "config": "unfrozen_no_aug",
+      "seed": 42,
+      "checkpoint": "3-unfrozen_no_aug_seed_0_checkpoint_20260720_1841.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "unfrozen_no_aug_seed43": {
+      "config": "unfrozen_no_aug",
+      "seed": 43,
+      "checkpoint": "4-unfrozen_no_aug_seed_1_checkpoint_20260726_1845.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "unfrozen_no_aug_seed44": {
+      "config": "unfrozen_no_aug",
+      "seed": 44,
+      "checkpoint": "5-unfrozen_no_aug_seed_2_checkpoint_20260726_2133.pt",
+      "huggingface": null,
+      "sha256": null,
+      "note": "Predates the code that stored the translation normalisation constants; normalisation.constants_for_checkpoint recomputes them from the training subset for this arm."
+    },
+    "unfrozen_aug_seed42": {
+      "config": "unfrozen_aug",
+      "seed": 42,
+      "checkpoint": "6-unfrozen_aug_seed_0_checkpoint_20260723_1342.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "unfrozen_aug_seed43": {
+      "config": "unfrozen_aug",
+      "seed": 43,
+      "checkpoint": "7-unfrozen_aug_seed_1_checkpoint_20260727_0310.pt",
+      "huggingface": null,
+      "sha256": null
+    },
+    "unfrozen_aug_seed44": {
+      "config": "unfrozen_aug",
+      "seed": 44,
+      "checkpoint": "8-unfrozen_aug_seed_2_checkpoint_20260727_0501.pt",
+      "huggingface": null,
+      "sha256": null
+    }
+  }
+}

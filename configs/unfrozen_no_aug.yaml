@@ -1,0 +1,7 @@
+# Arm 3: ResNet-50 layer 4 trainable, no augmentation.
+# Table 1 row "layer 4 / --". Run at seeds 42, 43, 44.
+extends: base.yaml
+name: unfrozen_no_aug
+seed: 42
+model:
+  trainable_stages: ["layer4"]

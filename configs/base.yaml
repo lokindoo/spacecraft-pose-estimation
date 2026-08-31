@@ -1,0 +1,23 @@
+# Shared settings for every arm of the 2x2 study.
+# Arm configs set `extends: base.yaml` and override only what differs.
+
+image:
+  # 320x512 grayscale, downscaled from the native 1920x1200 to fit the free-tier
+  # Colab GPU the study ran on.
+  height: 320
+  width: 512
+
+model:
+  head_hidden: 1024
+  trainable_stages: []      # [] = frozen backbone; ["layer4"] = the unfrozen arm
+
+augmentation:
+  enabled: false
+
+train:
+  epochs: 20
+  batch_size: 16
+  learning_rate: 1.0e-3
+  lambda_rotation: 1.0      # LAMBDA: weight on the rotation term of the split loss
+  checkpoint_every: 2       # checkpoints on even epochs; selection picks best val_r among them
+  num_workers: 2

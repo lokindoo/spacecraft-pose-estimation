@@ -1,0 +1,21 @@
+# Direct dependencies. Compile with:
+#   pip-compile requirements.in --output-file requirements.txt
+# Install torch/torchvision for your own CUDA version first if you need GPU
+# builds - the pinned wheels below are whatever your platform resolves to.
+matplotlib
+numpy
+pandas
+pillow
+pyyaml
+scipy
+statsmodels
+torch
+torchvision
+tqdm
+
+# preparing subsets from the raw download
+scikit-learn
+python-dotenv
+
+# tests
+pytest

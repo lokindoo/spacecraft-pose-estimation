@@ -1,0 +1,9 @@
+# Arm 4: ResNet-50 layer 4 trainable, photometric augmentation.
+# Table 1 row "layer 4 / check" - the best real-domain arm. Seeds 42, 43, 44.
+extends: base.yaml
+name: unfrozen_aug
+seed: 42
+model:
+  trainable_stages: ["layer4"]
+augmentation:
+  enabled: true

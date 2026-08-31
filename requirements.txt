@@ -1,0 +1,33 @@
+# Pinned environment for reproducing the study.
+#
+# Verified on Windows 11 / Python 3.14 with CPU wheels. The training runs
+# themselves were done on Colab GPUs, whose torch build differs - see the note
+# below.
+#
+# Regenerate with:  pip-compile requirements.in --output-file requirements.txt
+#
+# TORCH: these are CPU wheels. For a GPU box, install torch and torchvision from
+# the index matching your CUDA version FIRST, then `pip install -r
+# requirements.txt` for the rest:
+#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+# Nothing in this project pins a specific CUDA build, because inference results
+# are numerically stable across them at the precision the tables report (3 d.p.).
+
+matplotlib==3.11.0
+numpy==2.5.0
+pandas==3.0.3
+pillow==12.2.0
+PyYAML==6.0.3
+scipy==1.18.0
+statsmodels==0.14.6
+torch==2.13.0
+torchvision==0.28.0
+tqdm==4.68.3
+
+# Building the subsets from the raw Zenodo download (scripts/prepare_data.py)
+python-dotenv==1.2.2
+scikit-learn==1.9.0
+
+# Tests
+pytest==9.1.1

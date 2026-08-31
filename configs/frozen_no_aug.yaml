@@ -1,0 +1,5 @@
+# Arm 1: frozen backbone, no augmentation.
+# Table 1 row "frozen / --". Single seed (42) in the paper.
+extends: base.yaml
+name: frozen_no_aug
+seed: 42

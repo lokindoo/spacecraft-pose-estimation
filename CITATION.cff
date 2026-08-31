@@ -1,0 +1,63 @@
+cff-version: 1.2.0
+title: >-
+  Robust in the Wrong Direction: Augmentation and Uncertainty Under
+  Sim-to-Real Shift in Spacecraft Pose Estimation
+message: >-
+  If you use this code or the released checkpoints, please cite the
+  paper. If you use the SPEED+ dataset, cite Park et al. as well (see
+  references below) - this repository redistributes none of it.
+type: software
+authors:
+  - given-names: Nikolay
+    family-names: Dolgov
+    # TODO before release: affiliation, email, ORCID
+    # affiliation: ""
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/TODO/spacecraft-pose-estimator"
+license: Apache-2.0
+version: 1.0.0
+# TODO: set to the date the v1.0.0 tag is cut, matched to arXiv v1
+date-released: "2026-09-01"
+keywords:
+  - spacecraft pose estimation
+  - 6D pose estimation
+  - sim-to-real
+  - domain gap
+  - conformal prediction
+  - SPEED+
+
+# TODO once arXiv is live: fill in the identifier and uncomment.
+# preferred-citation:
+#   type: article
+#   title: >-
+#     Robust in the Wrong Direction: Augmentation and Uncertainty Under
+#     Sim-to-Real Shift in Spacecraft Pose Estimation
+#   authors:
+#     - given-names: Nikolay
+#       family-names: Dolgov
+#   year: 2026
+#   identifiers:
+#     - type: other
+#       value: "arXiv:XXXX.XXXXX"
+#   url: "https://arxiv.org/abs/XXXX.XXXXX"
+
+references:
+  - type: article
+    title: >-
+      SPEED+: Next-Generation Dataset for Spacecraft Pose Estimation
+      across Domain Gap
+    authors:
+      - family-names: Park
+        given-names: Tae Ha
+      - family-names: Martens
+        given-names: Marcus
+      - family-names: Lecuyer
+        given-names: Gurvan
+      - family-names: Izzo
+        given-names: Dario
+      - family-names: D'Amico
+        given-names: Simone
+    year: 2022
+    notes: >-
+      The dataset this study is built on. Hosted on Zenodo, record
+      5588480, and governed by its own licence terms.
