@@ -29,7 +29,7 @@ Table 1 of the paper is this file aggregated: mean ± s.d. over seeds for the
 | Column | Meaning |
 |---|---|
 | `arm` | includes the seed, e.g. `unfrozen_aug_seed43` |
-| `domain` | `in_domain_test`, `sunlamp`, `lightbox`, `synthetic` |
+| `domain` | `in_domain_test`, `sunlamp`, `lightbox`, `synthetic_old` |
 | `metric` | `translation_metres`, `translation_relative`, or `rotation` |
 | `nominal` | 0.9 throughout |
 | `q_hat` | the conformal radius, calibrated **once** on fresh synthetic data |
@@ -39,14 +39,43 @@ Table 1 of the paper is this file aggregated: mean ± s.d. over seeds for the
 
 Two things to know when reading it:
 
-- **`domain = synthetic` is a sanity check, not a result.** That split was used
-  to select checkpoints, so it is not exchangeable with calibration and should
-  read slightly *above* nominal. `in_domain_test` is the clean control.
+- **`domain = synthetic_old` is a sanity check, not a result.** That split was
+  used to select checkpoints, so it is not exchangeable with calibration and
+  should read slightly *above* nominal. `in_domain_test` is the clean control,
+  and it is the one the paper quotes as "in-domain".
 - **Rotation inflation is capped at π/q̂.** Rotation error cannot exceed π, so a
   small rotation inflation means either a genuinely robust model *or* a region
   that already fills most of SO(3) and has nowhere to grow. For the frozen arms
   it is the second: their 90% cone spans 2.30–2.40 rad, roughly half of all
   possible orientations. Read inflation next to the SO(3) share, never alone.
+
+## `constant_baseline.csv`
+
+Six rows — two constants x three domains. The trivial no-skill predictor: one
+fixed pose, fitted on the 28,000 synthetic **training** labels only and scored on
+every domain. Regenerate with `scripts/constant_baseline.py` (labels only; no
+images, no checkpoint, no GPU).
+
+| Column | Meaning |
+|---|---|
+| `constant` | `closed_form` (chordal-mean quaternion, arithmetic-mean position) or `best` (the constant that directly minimises the reported metric) |
+| `domain` | `synthetic` (validation), `lightbox`, `sunlamp` |
+| `translation_relative`, `rotation`, `speed_score` | scored exactly as the trained arms are |
+| `n` | images in that domain |
+
+This is what anchors "near chance" to something achievable rather than to a
+distributional assumption: SPEED+ orientations are not uniform on SO(3), so the
+2.207 rad uniform-guess level needs an empirical counterpart. It lands within
+0.03 rad of it on all three domains, which is why 2.207 is used throughout.
+
+**The paper quotes the `closed_form` rows** (App. C: E_T 0.415 / 0.367 / 0.372,
+E_R 2.176 / 2.203 / 2.199), and reads them as an *upper bound* on the optimal
+constant — both estimators minimise squared error while the reported metric is
+mean unsquared error. The `best` rows are the tighter constant, and they matter
+for translation, where the two differ substantially (sunlamp 0.330 vs 0.372);
+for rotation they agree to 0.001. The no-skill claim about sunlamp translation
+holds against either: two of the three augmented layer-4 seeds (0.405, 0.399)
+beat neither.
 
 ## `checkpoints.json`
 
