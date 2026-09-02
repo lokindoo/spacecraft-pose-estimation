@@ -8,7 +8,7 @@ that differed mostly by a seed literal; the logic now lives in
 |---|---|---|
 | `01_train_end_to_end.ipynb` | One arm from label file to selected checkpoint, with each step exposed: canonicalised labels, the augmentation stack rendered, the freeze policy, the split loss, the selection rule. | prepared subsets, a GPU for a real run |
 | `02_measure_the_gap.ipynb` | The moment the study is about — a synthetic-trained model meeting real imagery. Range check first, then errors against the chance level, then whether the model's confidence survives. | a trained checkpoint |
-| `03_reproduce_figures.ipynb` | The paper's three figures. | Figure 1 needs nothing; 2 needs the subsets; 3 needs prediction records |
+| `03_reproduce_figures.ipynb` | The paper's two figures — the augmentation/domain triptych and the conformal reliability panel — plus the rotation-error chart that earlier drafts carried. | Figure 1 needs the subsets; Figure 2 needs prediction records; the extra needs nothing |
 
 Each has a command-line equivalent under `scripts/`, which is what you want for
 an actual run. Use the notebooks to read the pipeline or to show someone what it
