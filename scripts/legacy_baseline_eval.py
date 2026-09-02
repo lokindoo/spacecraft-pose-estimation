@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Re-evaluate the project's FIRST baseline - 4,000 training images, head reading
-the backbone's 1,000-d ImageNet logits - on the current 2,000-image synthetic
-validation split.
+Re-evaluate the project's first baseline, which trained on 4,000 images with a
+head reading the backbone's 1,000-d ImageNet logits, on the current 2,000-image
+synthetic validation split.
 
     python scripts/legacy_baseline_eval.py \
         --checkpoint "<drive>/post_canonicalisation_model_checkpoints/checkpoint_20260705_1620.pt" \
@@ -10,41 +10,39 @@ validation split.
         --control-labels "<drive>/data/synthetic_subset_20260624/validation_subset_20260624.json" \
         --control-images "/content/legacy_synthetic"
 
-WHY. Section 3.1's headline used to read 1.63 -> 1.05 rad, which bundled three
-changes at once: 4k -> 28k images, ImageNet logits -> pooled 2048-d features,
-and a change of validation split (the earlier one was a 1,000-image split drawn
-from training.json). A footnote conceded the third rather than removing it.
-Scoring the old checkpoint on the *current* split removes it, and that is what
-this script did.
+The first finding's headline used to read 1.63 -> 1.05 rad, which bundled three
+changes together: 4k -> 28k images, ImageNet logits -> pooled 2048-d features,
+and a change of validation split, the earlier one being a 1,000-image split
+drawn from training.json. A footnote conceded the third rather than removing it.
+Scoring the old checkpoint on the current split removes it, which is what this
+script did.
 
-THE ANSWER, since this run has happened: the control reproduced the published
-1.634 exactly, and on the current 2,000-image split the same checkpoint scores
-E_T 0.098, E_R 1.666. So the paper reports the single-split comparison,
-1.67 -> 1.05 = 0.61 rad, and the split footnote is gone. Re-run this only to
-re-verify that number.
+That run has happened. The control reproduced the published 1.634 exactly, and
+on the current 2,000-image split the same checkpoint scores E_T 0.098, E_R
+1.666, so the paper now reports the single-split comparison, 1.67 -> 1.05 =
+0.61 rad, with no split footnote. Re-run this only to re-verify that number.
 
-What is left in the headline is a two-way confound between data and features.
+What remains in the headline is a two-way confound between data and features.
 The 4k/2048-d intermediate point that would decompose it (1.31 rad) is still on
-the *old* split, so the paper does not quote it - reinstating it needs a third
-eval path for that architecture/era, which neither this script nor evaluate.py
-provides. Inference only - minutes, one GPU, no training.
+the old split, so the paper does not quote it; reinstating it would need a third
+eval path for that architecture, which neither this script nor evaluate.py
+provides. Inference only: minutes on one GPU, no training. If the checkpoint is
+gone, say so and stop, and soften the number in the text rather than
+reconstructing the model from memory.
 
-If the checkpoint is gone, say so and stop: the fallback is to soften the number
-in the text, not to reconstruct the model from memory.
-
-THE ARCHITECTURE IS NOT THE CURRENT ONE and is rebuilt here deliberately. The
+The architecture here is not the current one, and is rebuilt deliberately. The
 first baseline left ResNet-50's ``fc`` in place and fed its 1,000 ImageNet
-logits to the head, and it z-scored ALL SEVEN targets - quaternion components
-included - rather than translation only. Both are reproduced below, because
+logits to the head, and it z-scored all seven targets, quaternion components
+included, rather than translation alone. Both are reproduced below, because
 loading those weights under the current model's conventions would produce
 plausible-looking numbers that are wrong.
 
-RUN THE CONTROL. With --control-labels pointing at the old 1,000-image
-validation split (and --control-images at its images), the script first
-reproduces the published legacy numbers, 1.634 / 2.073 / 2.002 rad. If that
-does not come back, the checkpoint, the normalisation constants, or the label
-file is not the one that produced the paper's numbers, and nothing downstream
-is worth reporting.
+Run the control. With --control-labels pointing at the old 1,000-image
+validation split, and --control-images at its images, the script first
+reproduces the published legacy numbers, 1.634 / 2.073 / 2.002 rad. If those do
+not come back, the checkpoint, the normalisation constants, or the label file is
+not the one that produced the paper's numbers, and nothing downstream is worth
+reporting.
 """
 
 from __future__ import annotations
@@ -76,7 +74,8 @@ LEGACY_LOGITS = 1000
 LEGACY_HEAD_HIDDEN = 1024
 POSE_OUTPUTS = 7
 
-# What notebook 08 printed for this checkpoint, on the OLD 1,000-image split.
+# What the original notebook printed for this checkpoint, on the old
+# 1,000-image split.
 PUBLISHED_CONTROL = {"synthetic": 1.6335688885450363, "sunlamp": 2.073278134114125,
                      "lightbox": 2.002465371388489}
 
@@ -86,9 +85,9 @@ class LegacyPoseEstimator(nn.Module):
     The first baseline, verbatim: ResNet-50 with its ImageNet classifier intact,
     then Linear(1000, 1024) -> ReLU -> Linear(1024, 7).
 
-    So the "1,000-d features" of section 3.1 were the ImageNet *logits* - a
-    thousand class scores - not pooled visual features. That is a sharper
-    contrast with the 2048-d pooled version than the paper originally drew.
+    Its "1,000-d features" were therefore the ImageNet logits, a thousand class
+    scores, rather than pooled visual features, which is a sharper contrast with
+    the 2048-d pooled version than the paper originally drew.
     """
 
     def __init__(self):
@@ -109,9 +108,9 @@ def legacy_normalisation(train_labels_path: Path, device) -> tuple[torch.Tensor,
     """
     Per-component mean and s.d. over all seven targets of the 4k training split.
 
-    ddof=0, matching the ``np.std`` default the notebook used. These are the
-    constants the model's outputs are expressed in; getting them from the
-    current 28k split instead would silently shift every prediction.
+    ddof=0, matching the ``np.std`` default the original notebook used. These
+    are the constants the model's outputs are expressed in, so taking them from
+    the current 28k split instead would shift every prediction.
     """
     train = load_labels(train_labels_path)
     means = train[LABEL_COLUMNS].to_numpy(dtype=np.float64).mean(axis=0)
@@ -175,8 +174,8 @@ def main(argv: list[str] | None = None) -> int:
         "--domains",
         nargs="+",
         default=["synthetic"],
-        help="Current splits to score on (default: synthetic - the 2,000-image "
-        "validation split section 3.1 needs). Add lightbox sunlamp to confirm "
+        help="Current splits to score on (default: synthetic, the 2,000-image "
+        "validation split the comparison needs). Add lightbox sunlamp to confirm "
         "the real-domain numbers are unchanged.",
     )
     parser.add_argument(
@@ -194,10 +193,10 @@ def main(argv: list[str] | None = None) -> int:
     if not checkpoint_path.exists():
         print(
             f"no checkpoint at {checkpoint_path}.\n"
-            "If it is genuinely gone, do not reconstruct it: soften section 3.1 to "
-            "'~0.5 rad on a comparable split' and keep the footnote. The "
-            "load-bearing half of the claim - that the real domains barely moved, "
-            "on identical full test sets - does not depend on this number.",
+            "If it is genuinely gone, do not reconstruct it: soften the claim to "
+            "'~0.5 rad on a comparable split' and keep the footnote. The stronger "
+            "half of the finding, that the real domains barely moved on identical "
+            "full test sets, does not depend on this number.",
             file=sys.stderr,
         )
         return 1
@@ -236,13 +235,13 @@ def main(argv: list[str] | None = None) -> int:
         if difference >= 0.01:
             print(
                 "Stop here. Something differs from the run that produced the paper's "
-                "numbers - wrong checkpoint, wrong normalisation labels, or a "
+                "numbers: wrong checkpoint, wrong normalisation labels, or a "
                 "re-prepared image subset. Nothing below is reportable.",
                 file=sys.stderr,
             )
             return 1
 
-    print("on the CURRENT splits:")
+    print("on the current splits:")
     for domain in args.domains:
         dataloader = build_eval_dataloader(
             domain, paths, transform, train_config, local_images=args.local_images
@@ -250,8 +249,8 @@ def main(argv: list[str] | None = None) -> int:
         report(domain, evaluate(model, dataloader, means, stds, device, domain))
 
     print(
-        "\nThe synthetic row is the de-confounded starting point for section 3.1. "
-        "The published\nrun gave E_R 1.666, which is why the paper quotes "
+        "\nThe synthetic row is the de-confounded starting point for the first "
+        "finding. The published\nrun gave E_R 1.666, which is why the paper quotes "
         "1.67 -> 1.05 rad (0.61) on one split, with no split footnote."
     )
     return 0

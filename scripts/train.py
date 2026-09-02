@@ -5,11 +5,11 @@ Train one arm of the 2x2 study.
     python scripts/train.py --config unfrozen_aug --seed 42
 
 The four configs times three seeds are the whole experiment. Checkpoints land in
-<artifacts>/model_checkpoints/<arm>_seed<n>/ and the run resumes from the latest
-one automatically, which matters on Colab where a session can disappear.
+<artifacts>/model_checkpoints/<arm>_seed<n>/, and the run resumes from the
+latest one automatically, which matters on Colab where a session can disappear.
 
 Add --smoke to run the whole pipeline on a handful of images in a couple of
-minutes on CPU. It proves the wiring, not the science.
+minutes on CPU. It checks the wiring, not the science.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--smoke",
         action="store_true",
-        help="Tiny subset, 2 epochs, batch 4 - a wiring check, not a run",
+        help="Tiny subset, 2 epochs, batch 4: a wiring check, not a run",
     )
     args = parser.parse_args(argv)
 
@@ -73,8 +73,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Training {describe(config)} on {device}")
     print(f"  {len(train_labels)} training / {len(validation_labels)} validation images")
 
-    # Normalisation constants come from the TRAINING split only - computing them
-    # over train+validation would leak the validation distribution into the model.
+    # Normalisation constants come from the training split alone; computing them
+    # over train+validation would leak the validation distribution into the
+    # model.
     means, stds = translation_normalisation(train_labels)
     normaliser = TranslationNormaliser(means, stds, device)
 

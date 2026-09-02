@@ -1,9 +1,6 @@
 """
-The paper's figures, regenerable from artifacts.
-
-A figure that only ever existed in a Colab output cell is a figure you will have
-to regenerate at the worst possible moment, so each of these writes to disk at
-publication size.
+The paper's figures, regenerable from artifacts rather than surviving only in a
+Colab output cell. Each writes to disk at publication size.
 """
 
 from __future__ import annotations
@@ -24,9 +21,8 @@ DOMAIN_COLOURS = {
 }
 
 # What each split is called in the paper. The pickles key these by their
-# internal split names ("in_domain_test"), which are fine in a results table and
-# wrong in a figure legend - the paper never uses that word, and an underscored
-# identifier reads as a leaked variable name.
+# internal split names ("in_domain_test"), which are fine in a results table but
+# read as leaked variable names in a figure legend.
 DOMAIN_LABELS = {
     "synthetic": "in-domain (synthetic)",
     "in_domain_test": "in-domain (synthetic)",
@@ -56,12 +52,12 @@ def rotation_error_by_arm(
     path: Path | None = None,
 ):
     """
-    Rotation error per arm and domain, against the chance level. Carried by
-    earlier drafts as Figure 1; the paper no longer includes it, since every
+    Rotation error per arm and domain, against the chance level. Earlier drafts
+    carried this as Figure 1; the paper no longer includes it, since every
     number in it is already in Table 1.
 
-    The dashed line is the point of the figure. Read distances from it, not
-    absolute heights - an error of 2.05 rad against a 2.207 chance level is a
+    The dashed line carries the figure: read distances from it rather than
+    absolute heights. An error of 2.05 rad against a 2.207 chance level is a
     model that has learned almost nothing, which the raw number hides.
     """
     figure, ax = plt.subplots(figsize=(7, 3.4))
@@ -96,12 +92,9 @@ def rotation_error_by_arm(
 
 def image_grid(images, rows: int, columns: int, path: Path | None = None, title: str = ""):
     """
-    A bare grid of image crops. Earlier drafts built the augmentation figure
-    from two of these side by side; crops_with_histograms replaced it.
-
-    No axes, no ticks: the comparison is between what the augmented synthetic
-    distribution looks like and what the real domains look like, and axis
-    furniture only gets in the way of seeing it.
+    A bare grid of image crops, with no axes or ticks. Earlier drafts built the
+    augmentation figure from two of these side by side; crops_with_histograms
+    replaced it.
     """
     figure, axes = plt.subplots(rows, columns, figsize=(columns * 2.2, rows * 1.5))
     for ax, image in zip(np.atleast_1d(axes).flat, images):
@@ -130,17 +123,15 @@ def reliability(
     font_scale: float = 1.0,
 ):
     """
-    Figure 2: nominal versus measured coverage. The diagonal is a perfectly
-    honest model; distance below it is how much the stated confidence overstates
-    the real thing.
+    Figure 2: nominal against measured coverage. The diagonal is a perfectly
+    honest model, and distance below it is how much the stated confidence
+    overstates the real thing.
 
-    ``show_title`` defaults off because the title names the seed, and the
-    paper's build is anonymised - the published PNG had it cropped out.
-
-    ``metrics`` may name one metric or two. In a 4-page paper there is no room
-    for two panels that are both legible at column width, so the paper's version
-    passes ("rotation",) alone - it is the stronger result - and ``font_scale``
-    bumps every label so the single panel still reads at print size.
+    ``show_title`` defaults off because the title names the seed and the paper's
+    build is anonymised. ``metrics`` may name one metric or two; a four-page
+    paper has no room for two panels that are both legible at column width, so
+    the published version passes ("rotation",) alone, and ``font_scale`` enlarges
+    every label so the single panel still reads at print size.
     """
     sizes = {
         "font.size": 11 * font_scale,
@@ -171,7 +162,7 @@ def reliability(
             # The single-panel version has no free corner: the diagonal fills the
             # upper left, and both real-domain curves turn up hard against the
             # right edge, which is exactly where "lower right" put the legend. It
-            # goes under the axes instead - same idiom as rotation_error_by_arm.
+            # goes under the axes instead, the same idiom as rotation_error_by_arm.
             first.legend(
                 loc="upper center", bbox_to_anchor=(0.5, -0.16),
                 ncol=2, frameon=False,
@@ -197,29 +188,30 @@ def crops_with_histograms(
     intensity-histogram strip underneath each column.
 
     ``columns`` maps a column heading ("augmented synthetic", "lightbox",
-    "sunlamp") to a list of images - 2-D arrays, or (C, H, W) tensors as they
-    come out of the transform stack. Every column needs the same number of them.
+    "sunlamp") to a list of images, either 2-D arrays or (C, H, W) tensors as
+    they come out of the transform stack. Every column needs the same number of
+    them.
 
-    THE HISTOGRAM STRIP IS THE ARGUMENT, not decoration. Without it the figure
-    asks the reader to agree that the augmented crops "look like" lightbox; with
-    it, the augmented column's pixel distribution is drawn over both real
-    columns (dashed) and the reader can see it track one and not the other. That
-    turns section 3.2's claim from an appeal to the eye into a measurement.
-    ``reference`` names the column that gets overlaid, defaulting to the first.
+    The histogram strip carries the argument rather than decorating it. Without
+    it the figure asks the reader to agree that the augmented crops look like
+    lightbox; with it, the augmented column's pixel distribution is drawn over
+    both real columns (dashed) and can be seen to track one and not the other,
+    which turns the claim into a measurement. ``reference`` names the column
+    that gets overlaid, defaulting to the first.
 
-    ...but only if the histogram is measuring the DOMAIN rather than the three
+    That only holds if the histogram measures the domain rather than the three
     pictures that happen to be on display. With ``pools`` omitted the densities
-    come from the crops in ``columns`` alone - three images - and which three you
-    drew visibly changes whether the columns separate at all. Pass ``pools`` (a
-    dict of the same keys mapping to any iterable of images, typically a few
-    hundred or the whole split) and the densities are accumulated over that
-    instead, so the crops illustrate and the strip measures. Pools are consumed
-    one image at a time and only the bin counts are kept, because the pixels of a
-    full domain do not fit in memory. A pool may also be a ``bins``-length array,
-    which is taken as an already-accumulated density and used as is.
+    come from the three crops in ``columns`` alone, and which three you drew
+    visibly changes whether the columns separate at all. Pass ``pools`` (the
+    same keys mapping to any iterable of images, typically a few hundred or the
+    whole split) and the densities are accumulated over that instead, so the
+    crops illustrate and the strip measures. Pools are consumed one image at a
+    time and only the bin counts are kept, since the pixels of a full domain do
+    not fit in memory. A pool may also be a ``bins``-length array, which is
+    taken as an already-accumulated density and used as is.
 
-    Counts are log-scaled by default: these frames are mostly empty space, so on
-    a linear axis the black background is the only thing visible.
+    Counts are log-scaled by default, because these frames are mostly empty
+    space and on a linear axis the black background is all that shows.
     """
     labels = list(columns)
     reference = reference or labels[0]
@@ -244,22 +236,21 @@ def crops_with_histograms(
     def density(label):
         pool = source[label]
         # Accumulating over a whole split is the expensive part of this figure,
-        # so a caller that has already done it (to compare pool sizes, say) can
-        # hand back the density itself instead of the images again.
+        # so a caller that has already done it can hand back the density itself
+        # instead of the images again.
         if isinstance(pool, np.ndarray) and pool.ndim == 1 and pool.size == bins:
             return pool
         return _intensity_density(pool, edges)
 
     densities = {label: density(label) for label in labels}
 
-    # THE STRIP PANELS MUST SHARE ONE y-AXIS. Each panel draws its own column's
-    # density plus, for the two real columns, the reference on top; left to
-    # autoscale separately they end up on three different log scales with no tick
-    # labels to give the game away, so the *same* reference array renders at a
-    # different height and apparent shape in each panel and matches the augmented
-    # column's own fill in none of them. Every cross-panel comparison the figure
-    # exists to support - which is the whole of section 3.2 - is then an artifact
-    # of per-panel autoscaling rather than a fact about the distributions.
+    # The strip panels must share one y-axis. Each panel draws its own column's
+    # density plus, for the two real columns, the reference on top. Left to
+    # autoscale separately they land on three different log scales with no tick
+    # labels to give it away, so the same reference array renders at a different
+    # height and apparent shape in each panel. Every cross-panel comparison the
+    # figure exists to support would then be an artifact of per-panel
+    # autoscaling rather than a fact about the distributions.
     strip_axes = []
 
     reference_line = None
@@ -269,7 +260,7 @@ def crops_with_histograms(
             ax.imshow(_as_image(columns[label][row]), cmap="gray", vmin=0, vmax=1)
             ax.set_axis_off()
             if row == 0:
-                # Column headings drawn on the figure itself - no axis furniture,
+                # Column headings drawn on the figure itself: no axis furniture,
                 # and nothing the caption has to explain.
                 ax.set_title(label, fontsize=10, pad=4)
 
@@ -298,9 +289,9 @@ def crops_with_histograms(
             ax.set_ylabel("density (log)" if log_counts else "density", fontsize=8)
 
     if reference_line is not None:
-        # One legend under the whole strip, not one inside every panel. "best"
-        # has nowhere to go in a panel this small - it landed on the curve it was
-        # labelling - and the entry was identical in each panel anyway.
+        # One legend under the whole strip rather than one inside every panel.
+        # "best" has nowhere to go in a panel this small, and the entry was
+        # identical in each panel anyway.
         figure.legend(
             handles=[reference_line], labels=[reference],
             loc="lower center", bbox_to_anchor=(0.5, -0.02),
@@ -325,11 +316,11 @@ def _intensity_density(images, edges: np.ndarray) -> np.ndarray:
     """
     Pixel-intensity density over any iterable of images.
 
-    Accumulates bin counts one image at a time rather than concatenating the
-    pixels: a three-crop column would fit either way, but a whole domain would
-    not (6,740 lightbox frames at 320x512 is ~9 GB of float64). Normalised the
-    way ``np.histogram(density=True)`` does - counts over total pixels times bin
-    width - so a pooled density and a three-crop one are on the same scale.
+    Bin counts are accumulated one image at a time rather than by concatenating
+    the pixels: a three-crop column would fit either way, but a whole domain
+    would not, since 6,740 lightbox frames at 320x512 is ~9 GB of float64.
+    Normalised as ``np.histogram(density=True)`` does, counts over total pixels
+    times bin width, so a pooled density and a three-crop one share a scale.
     """
     counts = np.zeros(len(edges) - 1, dtype=np.float64)
     total = 0

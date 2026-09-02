@@ -1,16 +1,12 @@
 """
-Inference over one or more domains, producing the prediction records every table
-and figure is computed from.
+Inference over one or more domains, producing the prediction records every
+table and figure is computed from.
 
 Predictions are stored rather than recomputed because they are the join point:
 the results table, the conformal analysis and the figures all read the same
-arrays, so a number cannot differ between the paper and the repo without the
-stored file differing too.
-
-What is stored per (arm, domain): filenames, predicted translation in metres,
-predicted unit quaternion, and both error families. Storing the raw predictions -
-not only the errors - is what lets the conformal stage recompute scores under a
-different metric without a second GPU pass.
+arrays. Each record holds filenames, the predicted translation in metres, the
+predicted unit quaternion, and both error families, so the conformal stage can
+rescore under a different metric without a second GPU pass.
 """
 
 from __future__ import annotations
@@ -83,7 +79,7 @@ def predict(
 
 
 def summarise(record: dict[str, np.ndarray]) -> dict[str, float]:
-    """Mean errors for one (arm, domain) - one row of the results table."""
+    """Mean errors for one (arm, domain), i.e. one row of the results table."""
     translation = float(np.mean(record["translation_relative"]))
     rotation = float(np.mean(record["rotation"]))
     return {
@@ -97,10 +93,8 @@ def summarise(record: dict[str, np.ndarray]) -> dict[str, float]:
 
 def save_predictions(path: str | Path, predictions: dict) -> Path:
     """
-    Write predictions as a pickle.
-
-    Written after every arm rather than once at the end, so a disconnected Colab
-    session costs one arm and not the whole sweep.
+    Write predictions as a pickle, after every arm rather than once at the end,
+    so a disconnected Colab session costs one arm and not the whole sweep.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,12 +1,11 @@
 <!--
 DRAFT HuggingFace model card.
 
-BLOCKING TODO BEFORE UPLOADING ANY WEIGHTS: read the SPEED+ licence on Zenodo
+Blocking TODO before uploading any weights: read the SPEED+ licence on Zenodo
 record 5588480 and confirm (a) that publishing weights derived from it is
 permitted and (b) what the licence is actually called, then fill in the
-`dataset_license` field below and the Dataset section. Do not guess this - it
-gates the upload, not just the card. Every other TODO here is cosmetic; that one
-is not.
+`dataset_license` field below and the Dataset section. Do not guess this: it
+gates the upload, not just the card. Every other TODO here is cosmetic.
 
 Move this YAML block to the top of the file when publishing (HuggingFace parses
 front matter only at position 0).
@@ -62,12 +61,12 @@ model-index:
 
 # SPEED+ Pose Estimator — sim-to-real study checkpoints
 
-Direct 6DoF pose regression (ResNet-50 + MLP head) trained **only on synthetic
-SPEED+ imagery**, released as the eight checkpoints behind a study of what
+Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
+SPEED+ imagery, released as the eight checkpoints behind a study of what
 transfers across the synthetic-to-real gap.
 
-These are not competitive weights. They are the experimental arms of a study, and
-they are published so its table can be regenerated rather than trusted.
+These are not competitive weights. They are the experimental arms of a study,
+published so that its table can be regenerated rather than taken on trust.
 
 Code, configs and the reproduction script:
 **TODO: repository URL**
@@ -75,8 +74,8 @@ Code, configs and the reproduction script:
 ## Checkpoints
 
 Each file corresponds to exactly one row of the results table. The selection
-rule, applied uniformly: **the checkpoint with the best synthetic validation
-rotation error** among those saved on even epochs. No real-domain measurement
+rule, applied uniformly, is the checkpoint with the best synthetic validation
+rotation error among those saved on even epochs. No real-domain measurement
 informed the choice.
 
 | File | Backbone | Augmentation | Seed |
@@ -92,9 +91,9 @@ informed the choice.
 
 ## Results
 
-E_T range-normalised; E_R geodesic, in radians. **Chance level for E_R is
-2.207 rad** — a uniformly random orientation guess. Read the errors as distance
-below that, not as absolute magnitudes.
+E_T range-normalised; E_R geodesic, in radians. The chance level for E_R is
+2.207 rad, the error of a uniformly random orientation guess. Read the errors as
+distance below that rather than as absolute magnitudes.
 
 | Backbone | Aug. | Synth E_T | Synth E_R | Lightbox E_T | Lightbox E_R | Sunlamp E_T | Sunlamp E_R |
 |---|---|---|---|---|---|---|---|
@@ -137,18 +136,18 @@ quaternion = quaternion / quaternion.norm(dim=1, keepdim=True)  # scalar-first, 
 print(translation, quaternion)
 ```
 
-Note the asymmetry: the **translation** half must be un-normalised, the
-**quaternion** half must not — it is trained raw and unit-normalised. Passing the
+Note the asymmetry. The translation half must be un-normalised; the quaternion
+half must not, since it is trained raw and unit-normalised. Passing the
 quaternion through the de-normaliser mangles every orientation in a way that
 still looks plausible.
 
 ## Intended use
 
-**Intended for:** research on sim-to-real transfer, domain-gap benchmarking on
+Intended for research on sim-to-real transfer, domain-gap benchmarking on
 SPEED+, uncertainty-quantification studies under distribution shift, and as a
 reproducible baseline for direct pose regression.
 
-**Not intended for:** any operational use. Explicitly:
+Not intended for any operational use. Explicitly:
 
 > **This is a research artifact, not flight software.** It has no verification,
 > validation, qualification, or testing appropriate to a spaceflight system, and
@@ -157,38 +156,38 @@ reproducible baseline for direct pose regression.
 
 ## Limitations
 
-- **Real-domain accuracy is poor in absolute terms.** The best arm's rotation
-  error on sunlamp (1.47 rad ≈ 84°) retains only ~36% of its synthetic skill.
-- **The model does not know when it is wrong.** Conformal regions calibrated to
-  90% on synthetic data cover 9–15% of rotation errors on real domains.
-  Confidence is *not* informative under the shift, and predictions arrive as
+- Real-domain accuracy is poor in absolute terms. The best arm's rotation error
+  on sunlamp (1.47 rad ≈ 84°) retains only ~36% of its synthetic skill.
+- The model does not know when it is wrong. Conformal regions calibrated to 90%
+  on synthetic data cover 9–15% of rotation errors on real domains, so
+  confidence is not informative under the shift and predictions arrive as
   confidently wrong as they do correct.
-- **Augmentation is directional.** The photometric stack is a poor model of
-  both real domains and a markedly less poor one of the diffuse, lightbox-like
-  case. It improves lightbox on every seed and does not move sunlamp's harsh
+- Augmentation is directional. The photometric stack is a poor model of both
+  real domains and a markedly less poor one of the diffuse, lightbox-like case.
+  It improves lightbox on every seed, and does not move sunlamp's harsh
   directional light beyond seed-to-seed variation.
-- **Trained on one target only** — the Tango spacecraft. Not a general-purpose
-  spacecraft pose estimator.
-- **Fixed input geometry**: 320×512 grayscale, one camera's intrinsics.
+- Trained on one target only, the Tango spacecraft. This is not a
+  general-purpose spacecraft pose estimator.
+- Fixed input geometry: 320×512 grayscale, one camera's intrinsics.
 - Direct regression relies on coarse global shape, so it degrades less than
-  keypoint+PnP pipelines across the gap. That is a property of the method class,
-  not a sign that these weights are robust.
+  keypoint+PnP pipelines across the gap. That is a property of the method class
+  rather than a sign that these weights are robust.
 
 ## Training data
 
 SPEED+ synthetic split only: 28,000 training and 2,000 validation images,
-downscaled to 320×512 grayscale. **No real image influenced training, tuning, or
-checkpoint selection.** The lightbox (6,740) and sunlamp (2,791) sets are used
+downscaled to 320×512 grayscale. No real image influenced training, tuning, or
+checkpoint selection; the lightbox (6,740) and sunlamp (2,791) sets are used
 strictly as held-out tests.
 
 ## Dataset licence
 
 The weights are derived from SPEED+, which is licensed separately by its authors
-and is **not** covered by this repository's Apache-2.0 licence.
+and is not covered by this repository's Apache-2.0 licence.
 
-> **TODO — BLOCKING:** state the SPEED+ licence here verbatim after reading the
-> Zenodo record (5588480) terms, and confirm they permit publishing derived model
-> weights. Resolve this before uploading anything.
+> **Blocking TODO:** state the SPEED+ licence here verbatim after reading the
+> Zenodo record (5588480) terms, and confirm they permit publishing derived
+> model weights. Resolve this before uploading anything.
 
 SPEED+ itself is not redistributed here, in any form.
 

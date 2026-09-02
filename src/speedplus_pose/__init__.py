@@ -1,12 +1,13 @@
 """
 Sim-to-real spacecraft pose estimation on SPEED+.
 
-Direct pose regression (ResNet-50 + MLP head) trained on synthetic imagery only,
-evaluated unchanged on the lightbox and sunlamp hardware-in-the-loop domains, in
-a 2x2 study of backbone adaptation x photometric augmentation - plus a
-split-conformal check on whether the model's own confidence survives the shift.
+Direct pose regression (ResNet-50 + MLP head) trained on synthetic imagery
+alone, then evaluated unchanged on the lightbox and sunlamp
+hardware-in-the-loop domains. The study is a 2x2 over backbone adaptation and
+photometric augmentation, with a split-conformal check on whether the model's
+stated confidence survives the shift.
 
-See README.md for the study, and configs/ for the four arms.
+See README.md for the write-up and configs/ for the four arms.
 """
 
 from .config import ExperimentConfig, load_config, set_seed

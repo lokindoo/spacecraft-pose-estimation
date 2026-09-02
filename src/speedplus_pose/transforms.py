@@ -1,26 +1,26 @@
 """
 The photometric augmentation stack, and the evaluation transform.
 
-This stack was built in good faith to anticipate harsh real illumination. The
-paper's second finding is that it does not: it models *diffuse* lighting
-variation, which is the lightbox domain, not sunlamp's collimated beam. Blur and
-noise actively teach the network to discard the high-frequency detail - specular
-edges, shadow boundaries - that is exactly what survives harsh light. Nothing
-here is "wrong"; the point of section 3.2 is that an augmentation is a model of a
-domain, and this one brackets the wrong domain.
+The stack was built to anticipate harsh real illumination, and the study's
+second finding is that it does not model it. What it varies is diffuse lighting,
+which is the lightbox domain rather than sunlamp's collimated beam, and blur and
+noise additionally teach the network to discard the high-frequency detail
+(specular edges, shadow boundaries) that survives harsh light. Nothing here is
+wrong in itself: an augmentation is a model of a domain, and this one brackets
+the wrong domain.
 
-ORDER MATTERS and is not arbitrary:
+The order is deliberate:
 
     resize + grayscale          on PIL
     ColorJitter + GammaJitter   on PIL, so gamma acts on 8-bit levels
     ToImage + ToDtype           -> float32 tensor in [0, 1]
     glare / blur / noise        on tensors, each at p = 0.5
-    Normalize                   ImageNet statistics, matching the pretrained backbone
-    RandomErasing               a regulariser, applied last and deliberately after
-                                normalisation (it writes zeros in normalised space)
+    Normalize                   ImageNet statistics, matching the backbone
+    RandomErasing               a regulariser, applied last and after
+                                normalisation, writing zeros in normalised space
 
-``preview=True`` drops only Normalize, so the result is still displayable. That
-is exactly how the augmented crops in Figure 1 were produced.
+``preview=True`` drops only Normalize, leaving a displayable result. That is how
+the augmented crops in Figure 1 were produced.
 """
 
 from __future__ import annotations
@@ -39,22 +39,17 @@ IMAGENET_STD = [0.229, 0.224, 0.225]
 
 def _uniform(low: float, high: float) -> float:
     """
-    Single scalar draw from the torch global RNG.
-
-    Deliberately torch and not numpy: torch.manual_seed then controls
-    augmentation along with weight init and shuffling. The published arms used
-    this; the notebook that rendered the augmented crops used numpy draws
-    instead, which changes which samples you see but not the distribution.
+    Single scalar draw from the torch global RNG, so torch.manual_seed controls
+    augmentation along with weight initialisation and shuffling.
     """
     return torch.empty(1).uniform_(low, high).item()
 
 
 class GammaJitter(torch.nn.Module):
     """
-    Random gamma correction, log-uniform over [lo, hi].
-
-    Log-uniform rather than uniform so darkening and brightening are equally
-    likely - uniform on [0.5, 2.0] would spend two thirds of its mass on gamma > 1.
+    Random gamma correction, log-uniform over [lo, hi] so that darkening and
+    brightening are equally likely; uniform on [0.5, 2.0] would spend two
+    thirds of its mass on gamma > 1.
     """
 
     def __init__(self, gamma: tuple[float, float] = (0.5, 2.0)):
@@ -79,14 +74,13 @@ class AdditiveGaussianNoise(torch.nn.Module):
 
 class SunGlareBlob(torch.nn.Module):
     """
-    A soft Gaussian bright blob, clamped at 1.0.
+    A soft Gaussian bright blob, clamped at 1.0, standing in for stray light.
 
-    Intended as stray light. The clamp is the interesting part: it saturates
-    pixels and so destroys whatever detail was under the blob, teaching the
-    network to keep working when part of the frame is blown out. Capped at one
-    blob per image - more than that removed too much of the spacecraft.
+    The clamp saturates pixels and destroys whatever detail was under the blob,
+    which is what teaches the network to keep working with part of the frame
+    blown out. One blob per image; more removed too much of the spacecraft.
 
-    Section 3.2: this models a *soft* bright region, whereas sunlamp's bright
+    Note that this models a soft bright region, whereas sunlamp's bright
     regions are saturated metallic surfaces that still carry pose information.
     """
 
@@ -147,10 +141,10 @@ def build_train_transform(
     """
     Training transform for one arm.
 
-    With ``augmentation.enabled`` false this is identical to the eval transform -
-    the no-augmentation arms of the 2x2 train on exactly what they are evaluated
-    on. With ``preview`` true, Normalize is omitted so the tensor still renders
-    as an image (this is the Figure 1 path).
+    With ``augmentation.enabled`` false this is identical to the eval
+    transform, so the no-augmentation arms train on exactly what they are
+    evaluated on. With ``preview`` true, Normalize is omitted and the tensor
+    still renders as an image, which is the Figure 1 path.
     """
     image = image or ImageConfig()
     if not augmentation.enabled:

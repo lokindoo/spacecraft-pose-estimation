@@ -1,17 +1,18 @@
 """
 Pose error metrics.
 
-TWO translation errors live here on purpose, and they are not interchangeable.
+Two translation errors live here on purpose, and they are not interchangeable:
 
   translation_error_metres    ||r_pred - r_true||
   translation_error_relative  ||r_pred - r_true|| / ||r_true||
 
-The relative one is the official SPEED+ normalised translation error and is what
-Table 1 reports. The absolute one is what the conformal analysis calibrates on,
-because there q_hat has to read directly as a keep-out sphere radius in metres.
-The published tables carry both - q_hat = 0.410 m and q_hat = 0.0787 are the same
-arm under the two metrics. Collapsing them into one "translation_error" would
-silently move half the conformal numbers, so they keep distinct names.
+The relative one is the official SPEED+ normalised translation error and is
+what Table 1 reports. The absolute one is what the conformal analysis
+calibrates on, since q_hat there has to read as a keep-out sphere radius in
+metres. The published tables carry both: q_hat = 0.410 m and q_hat = 0.0787 are
+the same arm under the two metrics. They keep distinct names so that collapsing
+them into one "translation_error" cannot quietly move half the conformal
+numbers.
 """
 
 from __future__ import annotations
@@ -19,9 +20,10 @@ from __future__ import annotations
 import numpy as np
 
 # A uniformly random orientation guess. The geodesic angle between two random
-# rotations has density (1 - cos(theta))/pi on [0, pi], giving a mean of
-# pi/2 + 2/pi. Rotation errors are read as distance BELOW this, not as raw
-# magnitudes: 1.67 and 2.07 rad look close, but as skill they are 0.54 and 0.14.
+# rotations has density (1 - cos(theta))/pi on [0, pi], so its mean is
+# pi/2 + 2/pi. Rotation errors are read as distance below this rather than as
+# raw magnitudes: 1.67 and 2.07 rad look close, but as skill they are 0.54 and
+# 0.14.
 CHANCE_LEVEL = np.pi / 2 + 2 / np.pi  # ~2.207 rad
 
 
@@ -49,9 +51,9 @@ def translation_error_metres(r_pred, r_true) -> np.ndarray:
 
 def translation_error_relative(r_pred, r_true) -> np.ndarray:
     """
-    Range-normalised position error - the official SPEED+ E_T, and the
+    Range-normalised position error: the official SPEED+ E_T, and the
     translation column of Table 1. Dividing by range keeps a 10 cm miss at 5 m
-    from being scored the same as a 10 cm miss at 40 m.
+    from scoring the same as a 10 cm miss at 40 m.
     """
     r_true_array = _check(_to_numpy(r_true), 3, "r_true")
     return translation_error_metres(r_pred, r_true_array) / np.linalg.norm(
@@ -61,10 +63,9 @@ def translation_error_relative(r_pred, r_true) -> np.ndarray:
 
 def rotation_error(q_pred, q_true) -> np.ndarray:
     """
-    Geodesic angle between two orientations, in radians: 2*arccos|<q_pred, q_true>|.
-
-    The absolute value is what makes this sign-invariant, so q and -q score
-    identically and the double cover cannot inflate the error.
+    Geodesic angle between two orientations, in radians:
+    2*arccos|<q_pred, q_true>|. The absolute value makes it sign-invariant, so
+    the double cover cannot inflate the error.
     """
     q_pred = _check(_to_numpy(q_pred), 4, "q_pred")
     q_true = _check(_to_numpy(q_true), 4, "q_true")
@@ -83,8 +84,7 @@ def skill(rotation_errors) -> np.ndarray:
 
     Positive means better than guessing; near zero means the model has learned
     essentially nothing about orientation, however respectable the raw error
-    looks. Section 2 of the paper reports errors and skill side by side for
-    exactly this reason.
+    looks. The paper reports errors and skill side by side for that reason.
     """
     return CHANCE_LEVEL - np.asarray(rotation_errors, dtype=float)
 
@@ -92,7 +92,7 @@ def skill(rotation_errors) -> np.ndarray:
 def skill_retained(reference_error: float, domain_error: float) -> float:
     """
     Fraction of a model's synthetic rotation skill that survives on a real
-    domain. The "retains 14% of it on sunlamp" figures in section 3.1.
+    domain.
     """
     reference_skill = CHANCE_LEVEL - reference_error
     if reference_skill <= 0:
@@ -104,8 +104,8 @@ def speed_score(translation_relative, rotation) -> np.ndarray:
     """
     The official SPEED+ pose score S = E_T + E_R, unthresholded.
 
-    SPEC2021 additionally zeroes errors below a calibration threshold; we report
-    the plain sum, which is stated in the paper's Metrics paragraph.
+    SPEC2021 additionally zeroes errors below a calibration threshold; we
+    report the plain sum.
     """
     return np.asarray(translation_relative, dtype=float) + np.asarray(
         rotation, dtype=float

@@ -1,11 +1,11 @@
 """
 Datasets, dataloaders, and the offline image preparation.
 
-Preparation is offline and deliberately so: 60k images at 1920x1200 will not
-stream from Drive fast enough to keep a Colab GPU busy, so images are downscaled
-once to 320x512, zipped, and unpacked to local disk at the start of a session.
-``materialise_images`` is that unpack step, written so it is a no-op when the
-images are already on local disk (i.e. when you are not on Colab).
+Preparation is offline by necessity: 60k images at 1920x1200 will not stream
+from Drive fast enough to keep a Colab GPU busy, so images are downscaled once
+to 320x512, zipped, and unpacked to local disk at the start of a session.
+``materialise_images`` is that unpack step, and is a no-op when the images are
+already on local disk.
 """
 
 from __future__ import annotations
@@ -31,8 +31,8 @@ class SpeedPlusDataset(Dataset):
     """
     One SPEED+ split: a directory of images plus a label frame.
 
-    The label frame must be in ``labels.COLUMN_ORDER`` - filename first, then the
-    seven pose values - because both are read positionally.
+    The label frame must be in ``labels.COLUMN_ORDER`` (filename first, then
+    the seven pose values), because both are read positionally.
     """
 
     def __init__(self, images_path: str | Path, labels: pd.DataFrame, transform=None):
@@ -75,15 +75,14 @@ def build_dataloader(
 
 def downscale_image(image: Image.Image, config: ImageConfig) -> Image.Image:
     """
-    Downscale to the study resolution with a good resampling filter.
+    Downscale to the study resolution.
 
-    PIL's LANCZOS is used rather than skimage's ``resize`` (which the original
-    preparation notebooks used via ``image_utils.downsize_image``) because the
-    training transform loads with PIL and resizes with torchvision, and matching
-    the library here avoids a second, subtly different resampling path. The
-    published subsets were produced with the skimage route; regenerating them
-    with this one gives visually identical 320x512 crops, but if you want the
-    byte-identical inputs, use the released subset archives.
+    PIL's LANCZOS rather than skimage's ``resize``, which the original
+    preparation notebooks used: the training transform loads with PIL and
+    resizes with torchvision, so matching the library avoids a second, subtly
+    different resampling path. The published subsets came from the skimage
+    route, and regenerating them here gives visually identical 320x512 crops;
+    use the released subset archives if you need byte-identical inputs.
     """
     return image.resize((config.width, config.height), Image.LANCZOS)
 
@@ -117,8 +116,9 @@ def downscale_directory(
 
 def archive_images(images_path: str | Path, archive_path: str | Path) -> int:
     """
-    Zip a prepared image directory, stored (not deflated) - the JPEGs are already
-    compressed, so deflate costs time and saves nothing. Returns the file count.
+    Zip a prepared image directory, stored rather than deflated: the JPEGs are
+    already compressed, so deflate costs time and saves nothing. Returns the
+    file count.
     """
     images_path, archive_path = Path(images_path), Path(archive_path)
     paths = sorted(images_path.glob(IMAGE_GLOB))
@@ -139,10 +139,11 @@ def materialise_images(
     """
     Return a local directory holding this subset's images.
 
-    If ``subset_path/images`` already exists (running locally), it is used as-is.
-    Otherwise ``subset_path/images.zip`` is copied to fast local storage and
-    unpacked - the Colab pattern, where the subset lives on a mounted Drive and
-    reading 30k small files across the mount is unusably slow.
+    If ``subset_path/images`` already exists, as it does when running locally,
+    it is used as is. Otherwise ``subset_path/images.zip`` is copied to fast
+    local storage and unpacked, which is the Colab pattern: the subset lives on
+    a mounted Drive, and reading 30k small files across the mount is unusably
+    slow.
     """
     subset_path = Path(subset_path)
 

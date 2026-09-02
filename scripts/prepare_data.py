@@ -4,7 +4,7 @@ Build the downscaled subsets from a raw SPEED+ download.
 
     python scripts/prepare_data.py --all
 
-SPEED+ itself is NOT redistributed by this project. Download it from Zenodo
+SPEED+ itself is not redistributed by this project. Download it from Zenodo
 record 5588480, accept its licence, and point --data-root at the extracted
 directory (the one containing synthetic/, lightbox/, sunlamp/ and camera.json).
 
@@ -15,8 +15,9 @@ What this produces, under <data-root>/subsets/:
   lightbox_downscaled/, sunlamp_downscaled/   the real domains, in full
 
 The two synthetic subsets are disjoint by construction, and the conformal one is
-additionally drawn from images the training run never saw - which is the whole
-basis for calling it a "fresh synthetic" control. That is asserted, not assumed.
+additionally drawn from images the training run never saw, which is what makes
+it a "fresh synthetic" control. Both properties are asserted rather than
+assumed.
 """
 
 from __future__ import annotations
@@ -60,7 +61,7 @@ def prepare_synthetic(paths: Paths, seed: int, image: ImageConfig) -> None:
     """
     Sample the training and validation splits.
 
-    SPEED+ ships its own train/validation division of the synthetic set; we
+    SPEED+ ships its own train/validation division of the synthetic set, and we
     sample within each rather than re-splitting across both, so the validation
     images were never candidates for training.
     """
@@ -84,11 +85,11 @@ def prepare_synthetic(paths: Paths, seed: int, image: ImageConfig) -> None:
 def prepare_conformal(paths: Paths, seed: int, image: ImageConfig) -> None:
     """
     Carve the conformal calibration and in-domain test splits out of the
-    synthetic validation images that the 2k validation split did NOT take.
+    synthetic validation images the 2k validation split did not take.
 
-    This is the step the coverage result depends on. A conformal guarantee
-    calibrated on images the model was fitted on - or selected on - is not a
-    guarantee about anything, so the exclusion is explicit and then asserted.
+    The coverage result depends on this step. A guarantee calibrated on images
+    the model was fitted on, or selected on, is not a guarantee about anything,
+    so the exclusion is explicit and then asserted.
     """
     print(f"\n{SUBSET_CONFORMAL}")
     available = pd.read_json(paths.raw_labels("synthetic", "validation"))
@@ -118,10 +119,8 @@ def prepare_conformal(paths: Paths, seed: int, image: ImageConfig) -> None:
 
 def prepare_real(paths: Paths, image: ImageConfig) -> None:
     """
-    Downscale both real domains in full.
-
-    No sampling and no split: these are test sets, used exactly once each, and
-    never for training, tuning or model selection.
+    Downscale both real domains in full. No sampling and no split: these are
+    test sets, used once each, and never for training, tuning or selection.
     """
     for domain, subset in (("lightbox", SUBSET_LIGHTBOX), ("sunlamp", SUBSET_SUNLAMP)):
         print(f"\n{subset}")
@@ -137,11 +136,9 @@ def prepare_real(paths: Paths, image: ImageConfig) -> None:
 
 def archive(paths: Paths) -> None:
     """
-    Zip each prepared subset.
-
-    Only needed for Colab, where reading tens of thousands of small files across
-    a mounted Drive is unusably slow - one archive copies over in seconds and
-    unpacks to local disk.
+    Zip each prepared subset. Only needed for Colab, where reading tens of
+    thousands of small files across a mounted Drive is unusably slow; one
+    archive copies over in seconds and unpacks to local disk.
     """
     for subset in (SUBSET_SYNTHETIC, SUBSET_CONFORMAL, SUBSET_LIGHTBOX, SUBSET_SUNLAMP):
         directory = paths.subset(subset)
@@ -164,13 +161,13 @@ def main(argv: list[str] | None = None) -> int:
         "--seed",
         type=int,
         default=42,
-        help="Sampling seed. Changing it produces a DIFFERENT dataset, and the "
+        help="Sampling seed. Changing it produces a different dataset, and the "
         "published numbers no longer apply.",
     )
     args = parser.parse_args(argv)
 
     if not any((args.synthetic, args.conformal, args.real, args.archive, args.all)):
-        parser.error("nothing to do - pass --all or one of the stage flags")
+        parser.error("nothing to do; pass --all or one of the stage flags")
 
     paths = Paths(args.data_root, args.artifacts_root or ".")
     image = ImageConfig()

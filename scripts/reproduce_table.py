@@ -7,21 +7,21 @@ results.
     python scripts/reproduce_table.py --from-checkpoints <dir>
 
 --from-predictions reads the prediction records scripts/evaluate.py wrote and
-recomputes the table from them. No GPU, seconds.
+recomputes the table from them. No GPU, and it takes seconds.
 
---from-checkpoints is the real thing: it loads each released checkpoint, runs
+--from-checkpoints does the full job: it loads each released checkpoint, runs
 inference over every domain, and rebuilds the table from raw model outputs. Use
-this one to verify a set of downloaded weights actually produces the published
+it to verify that a set of downloaded weights really does produce the published
 numbers.
 
-Either way the result is compared row by row against results/results_2x2.csv and
-the script exits non-zero on any disagreement beyond --tolerance. That comparison
-is the point: a table you can regenerate is a table someone can trust.
+Either way the result is compared row by row against results/results_2x2.csv,
+and the script exits non-zero on any disagreement beyond --tolerance. That
+comparison is what makes the table checkable rather than merely stated.
 
-NOTE ON RETRAINING: re-running scripts/train.py will NOT reproduce these numbers
-exactly. The published runs seeded torch only, leaving numpy, random and the
-DataLoader workers unseeded, so the runs are not bit-reproducible. Reproduce from
-the checkpoints, not from a retrain.
+Re-running scripts/train.py will not reproduce these numbers exactly. The
+published runs seeded torch only, leaving numpy, random and the DataLoader
+workers unseeded, so they are not bit-reproducible. Reproduce from the
+checkpoints rather than from a retrain.
 """
 
 from __future__ import annotations
@@ -157,7 +157,7 @@ def print_table(measured: pd.DataFrame) -> None:
             parts.append(f"{domain} " + "/".join(f"{v:.3f}" for v in values))
         print(f"  {arm} per-seed E_R: " + ", ".join(parts))
 
-    # The headline sentence of the study, computed rather than asserted.
+    # The headline claim of the study, computed rather than asserted.
     best = measured[measured["arm"] == "unfrozen_aug"]
     if not best.empty:
         synthetic = best[best["domain"] == "synthetic"]["rotation"].mean()

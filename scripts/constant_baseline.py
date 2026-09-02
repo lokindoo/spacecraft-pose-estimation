@@ -5,29 +5,20 @@ and scored on every domain.
 
     python scripts/constant_baseline.py
 
-Labels only. No images, no checkpoint, no GPU - a couple of seconds on a CPU,
-and on Colab it needs nothing mounted beyond the label JSONs.
+Labels only. No images, no checkpoint, no GPU: a couple of seconds on a CPU, and
+on Colab it needs nothing mounted beyond the label JSONs.
 
-WHY THIS EXISTS. The paper reads rotation errors as distances below the chance
-level, pi/2 + 2/pi ~ 2.207 rad. That is the error of a uniformly random guess,
-and SPEED+ attitudes are not uniform on SO(3), so a predictor that always emits
-the mean training pose will score better than 2.207. This script measures how
-much better, on each domain, which settles two things at once:
-
-  * if the constant predictor lands near 2.207, the chance level is the right
-    anchor and the framing is bulletproofed for the cost of one table row;
-  * if it lands well below, then any arm scoring above it - the frozen sunlamp
-    arm at 2.048 rad is the candidate - is worse than doing nothing, and the
-    "retains 14% of its skill" line in section 3.1 is generous rather than
-    damning.
-
-Both outcomes are usable. The number is what decides which.
+The study reads rotation errors as distances below the chance level, pi/2 + 2/pi
+~ 2.207 rad. That is the error of a uniformly random guess, and SPEED+ attitudes
+are not uniform on SO(3), so a predictor that always emits the mean training
+pose ought to score better than 2.207. This script measures how much better, on
+each domain, which tells you whether the chance level is a fair anchor or
+whether an arm scoring near it is in fact worse than doing nothing.
 
 Two constants are reported per quantity: the closed-form one (chordal-mean
 quaternion, arithmetic-mean position) and the one that directly minimises the
-reported metric. Quote the *best* row in the paper - the claim being anchored is
-"no constant pose does better than this", so the strongest constant is the
-honest comparison. See baselines.py for why they differ.
+reported metric. Quote the stronger of the two, since the claim being anchored
+is that no constant pose does better. See baselines.py for why they differ.
 """
 
 from __future__ import annotations
@@ -63,8 +54,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--fit-split",
         default="train",
-        help="Split the constant is fitted on (default: train - the 28k "
-        "synthetic training labels, the only labels a deployed system would have)",
+        help="Split the constant is fitted on (default: train, the 28k synthetic "
+        "training labels, which are the only labels a deployed system would have)",
     )
     parser.add_argument(
         "--domains",
@@ -79,8 +70,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    # The artifacts root is irrelevant here - nothing is read from or written to
-    # it - so it is defaulted rather than demanded.
+    # Nothing is read from or written to the artifacts root here, so it is
+    # defaulted rather than demanded.
     paths = Paths(args.data_root, args.artifacts_root or Path("."))
 
     train = load_split_labels(args.fit_split, paths)
@@ -121,10 +112,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"\nchance level (uniform guess) is {CHANCE_LEVEL:.3f} rad. Read the E_R "
-        "column against it:\nthe gap is how much of the paper's 'skill above "
-        "chance' is available for free, from\nthe pose prior alone. Any arm in "
-        "Table 1 scoring ABOVE the corresponding 'best' row is\nworse than "
-        "predicting a single fixed pose."
+        "column against it:\nthe gap is how much skill above chance comes for "
+        "free from the pose prior alone. Any arm\nin Table 1 scoring above the "
+        "corresponding 'best' row is worse than predicting a single\nfixed pose."
     )
 
     output = Path(args.output)

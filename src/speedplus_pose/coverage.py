@@ -1,18 +1,14 @@
 """
-Split-conformal coverage across the domain gap.
-
-The experiment in one line: calibrate q_hat once on fresh synthetic images, then
-hold it fixed and ask what fraction of errors it actually covers on real ones.
+Split-conformal coverage across the domain gap: calibrate q_hat once on fresh
+synthetic images, then hold it fixed and ask what fraction of errors it covers
+on real ones.
 
 Two guards make the answer trustworthy, and both matter more than the headline
-number:
-
-  * The calibration split must be disjoint from training AND from the validation
-    split used to select checkpoints, or the "fresh synthetic" control is not
-    fresh (labels.assert_disjoint).
-  * In-domain coverage must land on nominal before any real-domain number is
-    read. ``gate`` below is that check, and it is sized against the right null -
-    see its docstring.
+number. The calibration split must be disjoint from training and from the
+validation split used to select checkpoints, or the "fresh synthetic" control is
+not fresh (labels.assert_disjoint). And in-domain coverage must land on nominal
+before any real-domain number is read; ``gate`` below is that check, sized
+against the right null.
 """
 
 from __future__ import annotations
@@ -33,7 +29,7 @@ from .conformal import (
 # Nominal 90% regions throughout the study.
 ALPHA = 0.1
 
-# The three score families reported. "translation" is metres - see metrics.py for
+# The three score families reported. "translation" is metres; see metrics.py for
 # why both translation metrics are carried rather than unified.
 METRICS = ("translation_metres", "translation_relative", "rotation")
 METRIC_UNITS = {"translation_metres": "m", "translation_relative": "", "rotation": "rad"}
@@ -63,10 +59,8 @@ def scores_from_record(record: dict) -> dict[str, np.ndarray]:
 
 def calibrate(calibration_scores: dict[str, np.ndarray], alpha: float = ALPHA) -> dict[str, float]:
     """
-    q_hat per metric, from the calibration split only.
-
-    Computed ONCE. It is never recomputed per domain - that is the whole
-    experiment.
+    q_hat per metric, from the calibration split only. Computed once and never
+    recomputed per domain, which is the whole experiment.
     """
     return {
         metric: float(compute_q_hat(calibration_scores[metric], alpha))
@@ -108,26 +102,26 @@ def gate(
     """
     In-domain control: does the 90% promise hold on fresh synthetic data?
 
-    Sizing this correctly matters, because TWO things are random, not one:
+    Sizing this correctly matters, because two things are random rather than
+    one. q_hat is the k-th smallest of n_calibration scores, so the coverage it
+    delivers is itself Beta(k, n_cal + 1 - k); hits among the test points are
+    then binomial given that coverage. Compounded, the honest spread is wider
+    than either alone.
 
-      1. q_hat is the k-th smallest of n_calibration scores, so the coverage it
-         actually delivers is itself random - Beta(k, n_cal + 1 - k).
-      2. Given that coverage, hits among the test points are binomial.
-
-    Compounded, the honest spread is wider than either alone. A Clopper-Pearson
-    interval on the test proportion models only source 2, i.e. it treats q_hat as
-    an exact known threshold; simulated on a pipeline with nothing wrong with it,
-    a CP gate rejects often enough that across a dozen measurements it is
-    near-certain to cry wolf. So CP stays for REPORTING each number's
-    uncertainty, and the pass/fail decision uses the compounded beta-binomial
-    null.
+    A Clopper-Pearson interval on the test proportion models only the second
+    source, treating q_hat as an exact known threshold. Simulated on a sound
+    pipeline, such a gate rejects often enough that a dozen measurements will
+    almost certainly produce a false alarm, so Clopper-Pearson stays for
+    reporting each number's uncertainty and the pass/fail decision uses the
+    compounded beta-binomial null.
 
     The mean z-score is the second half of the check. Per-measurement noise can
-    hide a systematic fault; a real pipeline bug drags every arm the same way, so
-    a mean z far from zero is informative even when no single arm trips the gate.
-    The arms share calibration and test images, so these z-scores are correlated
-    by an unknown amount - under the worst case, perfect correlation, the mean is
-    itself standard normal, which makes 3.0 a conservative threshold.
+    hide a systematic fault, whereas a real pipeline bug drags every arm the
+    same way, so a mean z far from zero is informative even when no single arm
+    trips the gate. The arms share calibration and test images, so these
+    z-scores are correlated by an unknown amount; in the worst case of perfect
+    correlation the mean is itself standard normal, which makes 3.0
+    conservative.
 
     Returns ``(passed, z_scores)``.
     """
@@ -150,11 +144,12 @@ def sweep_reliability(
     alphas: np.ndarray,
 ) -> dict[str, np.ndarray]:
     """
-    Measured coverage as nominal coverage is swept - the reliability curve.
+    Measured coverage as nominal coverage is swept: the reliability curve.
 
     A perfectly honest model tracks the diagonal. Curves must be non-decreasing
-    in nominal coverage, since relaxing alpha can only admit more points; that is
-    guaranteed by the maths, which is what makes it a sharp check on the code.
+    in nominal coverage, since relaxing alpha can only admit more points, and
+    because the maths guarantees that, the assertion below is a sharp check on
+    the code.
     """
     curves = {domain: [] for domain in domain_scores}
     for alpha in alphas:

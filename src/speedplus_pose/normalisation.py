@@ -1,16 +1,15 @@
 """
 Translation target normalisation.
 
-Translation targets are z-scored per component before the MSE term, and
-predictions are un-scored before any error is computed. The constants are
-properties of the *training subset*, so they must travel with the checkpoint -
-evaluating with different constants silently mangles every position prediction
-in a way that still looks plausible.
+Targets are z-scored per component before the MSE term, and predictions are
+un-scored before any error is computed. The constants are properties of the
+training subset, so they travel with the checkpoint: evaluating with different
+ones mangles every position prediction while still looking plausible.
 
-One published checkpoint (the seed-44 unfrozen no-aug arm) predates the code
+One published checkpoint, the seed-44 unfrozen no-aug arm, predates the code
 that stored them. ``constants_for_checkpoint`` recomputes from the training
-subset in that case, and - importantly - verifies the recomputed values against
-the checkpoints that *do* carry them rather than assuming they agree.
+subset in that case, and checks the recomputed values against the checkpoints
+that do carry them rather than assuming they agree.
 """
 
 from __future__ import annotations
@@ -38,11 +37,10 @@ class TranslationNormaliser:
 
     def remove(self, targets: torch.Tensor) -> torch.Tensor:
         """
-        Z-scores -> metres. Used on the translation half of the model output.
+        Z-scores -> metres, for the translation half of the model output only.
 
-        Only the first three outputs go through this. The quaternion half is
-        trained raw and unit-normalised, so passing it through here would corrupt
-        every rotation prediction - a trap the project hit once already.
+        The quaternion half is trained raw and unit-normalised, so passing it
+        through here would corrupt every rotation prediction.
         """
         return (targets * self.stds) + self.means
 
@@ -55,13 +53,13 @@ def constants_for_checkpoint(
     tolerance: float = 1e-3,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
-    Normalisation constants for one checkpoint, preferring the stored values but
-    checking them against constants recomputed from the training subset.
+    Normalisation constants for one checkpoint: the stored values where
+    present, checked against constants recomputed from the training subset.
 
-    Every arm trained on the same subset, so stored and recomputed values must
-    agree. A disagreement means the checkpoint came from a different subset than
-    you think, which would invalidate its translation numbers - so it warns
-    loudly rather than proceeding quietly.
+    Every arm trained on the same subset, so the two must agree. A disagreement
+    means the checkpoint came from a different subset than you think, which
+    would invalidate its translation numbers, so it warns rather than
+    proceeding quietly.
     """
     fallback_means = torch.as_tensor(fallback_means, dtype=torch.float32)
     fallback_stds = torch.as_tensor(fallback_stds, dtype=torch.float32)

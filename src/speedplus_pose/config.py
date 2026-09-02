@@ -1,9 +1,9 @@
 """
 Experiment configuration.
 
-The 2x2 study is four arms x three seeds, and in the original notebooks that was
-eleven near-identical files differing by a seed literal and a checkpoint
-directory name. Here it is four YAML files and a ``--seed`` flag.
+The study is four arms times three seeds. Each arm is one YAML file in
+``configs/`` and the seed comes from a ``--seed`` flag, which collapses the
+eleven near-identical notebooks the study began with into four files.
 
 A config file may set ``extends: base.yaml`` to inherit from another config in
 the same directory; keys merge one level deep.
@@ -49,8 +49,7 @@ class ModelConfig:
 class AugmentationConfig:
     """
     The photometric stack. Defaults are the values the published arms trained
-    with; see transforms.py for what each one does and article.tex section 3.2
-    for what it turned out to model.
+    with; see transforms.py for what each one does.
     """
 
     enabled: bool = False
@@ -95,10 +94,7 @@ class ExperimentConfig:
 
     @property
     def arm(self) -> str:
-        """
-        Key used in results tables and checkpoints.json, e.g.
-        ``unfrozen_aug_seed42``. Same strings as project_context/results_table.md.
-        """
+        """Key used in results tables and checkpoints.json, e.g. ``unfrozen_aug_seed42``."""
         return f"{self.name}_seed{self.seed}"
 
 
@@ -134,9 +130,9 @@ def _load_raw(path: Path, _seen: frozenset[Path] = frozenset()) -> dict[str, Any
 
 def load_config(path: str | Path, seed: int | None = None) -> ExperimentConfig:
     """
-    Read a config file. ``path`` may be a bare name ("unfrozen_aug"), a filename,
-    or a full path. ``seed`` overrides whatever the file says, which is how the
-    three-seed repeats are run.
+    Read a config file. ``path`` may be a bare name ("unfrozen_aug"), a
+    filename, or a full path. ``seed`` overrides whatever the file says, which
+    is how the three-seed repeats are run.
     """
     candidate = Path(path)
     if not candidate.exists():
@@ -162,12 +158,11 @@ def set_seed(seed: int) -> None:
     """
     Seed torch, numpy and random.
 
-    NOTE, and this is stated in the README too: the published runs called
-    ``torch.manual_seed(seed)`` and nothing else. numpy, ``random``, and the
-    DataLoader workers were left unseeded. Seeding all of them here is the right
-    thing to do going forward, but it means re-training will NOT bit-reproduce
-    the released checkpoints. Reproduce the tables from the checkpoints
-    (scripts/reproduce_table.py), not by re-training.
+    The published runs called ``torch.manual_seed(seed)`` and nothing else,
+    leaving numpy, ``random`` and the DataLoader workers unseeded. Seeding all
+    of them is the better default, but it means re-training will not
+    bit-reproduce the released checkpoints; reproduce the tables from the
+    checkpoints instead (scripts/reproduce_table.py). The README says the same.
     """
     torch.manual_seed(seed)
     np.random.seed(seed)

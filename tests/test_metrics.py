@@ -1,8 +1,8 @@
 """
 Metric tests.
 
-These pin down the two things most likely to be quietly broken by a refactor:
-that the two translation metrics stay distinct, and that rotation error stays
+These pin down the two things a refactor is most likely to break quietly: that
+the two translation metrics stay distinct, and that rotation error stays
 sign-invariant.
 """
 
@@ -29,8 +29,8 @@ def test_translation_metrics_are_different():
     The two translation metrics must not be interchangeable.
 
     A 5 m miss on a target 10 m away is 0.5 relative; the same miss at 50 m is
-    0.1. The conformal analysis calibrates on metres (q_hat is a keep-out sphere
-    radius) while Table 1 reports the relative one, and swapping them silently
+    0.1. The conformal analysis calibrates on metres, where q_hat is a keep-out
+    sphere radius, while Table 1 reports the relative one, so swapping them
     would move half the published numbers.
     """
     r_pred = np.array([[0.0, 0.0, 5.0], [0.0, 0.0, 45.0]])
@@ -62,10 +62,9 @@ def test_rotation_error_normalises_input():
 
 def test_chance_level():
     """
-    The mean geodesic angle between two uniformly random orientations.
-
-    Verified against the closed form pi/2 + 2/pi by sampling: the density of the
-    angle is (1 - cos(theta))/pi on [0, pi].
+    The mean geodesic angle between two uniformly random orientations, checked
+    against the closed form pi/2 + 2/pi by sampling. The density of the angle is
+    (1 - cos(theta))/pi on [0, pi].
     """
     assert np.isclose(CHANCE_LEVEL, np.pi / 2 + 2 / np.pi)
 

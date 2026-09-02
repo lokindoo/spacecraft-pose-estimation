@@ -1,16 +1,13 @@
 """
 Where things live.
 
-The original notebooks hard-coded three different roots: a Windows dataset path,
-``/content/drive/MyDrive/Colab Notebooks/Spacecraft pose estimation`` for
-checkpoints, and ``/content`` for unpacked images. Nothing here knows about any
-of those. Two roots are resolved once, from the environment or an explicit
-argument, and everything else hangs off them.
+Two roots are resolved once, from the environment or an explicit argument, and
+every other location hangs off them:
 
-    SPEEDPLUS_DATA_ROOT   raw SPEED+ download + the derived subsets
-    SPEEDPLUS_ARTIFACTS   checkpoints, predictions, figures - things runs produce
+    SPEEDPLUS_DATA_ROOT   raw SPEED+ download and the derived subsets
+    SPEEDPLUS_ARTIFACTS   checkpoints, predictions, figures
 
-``DATASET_PATH`` is accepted as a fallback for the data root because that is the
+``DATASET_PATH`` is accepted as a fallback for the data root, since that is the
 name the project's existing ``.env`` uses.
 """
 

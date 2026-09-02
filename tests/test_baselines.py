@@ -1,9 +1,9 @@
 """
 Constant-predictor tests.
 
-The point of the constant baseline is to be un-arguable, so these pin the two
-properties a reviewer would poke at: that the double cover cannot move the mean
-orientation, and that the refined constants really do optimise the metric the
+The constant baseline is only useful if it is hard to argue with, so these pin
+the two properties a reviewer would poke at: that the double cover cannot move
+the mean orientation, and that the refined constants optimise the metric the
 paper reports rather than a convenient proxy.
 """
 
@@ -22,7 +22,7 @@ from speedplus_pose.metrics import rotation_error, translation_error_relative
 
 
 def _random_quaternions(n: int, spread: float, seed: int = 0) -> np.ndarray:
-    """n orientations clustered around the identity - a stand-in for a pose prior."""
+    """n orientations clustered around the identity, standing in for a pose prior."""
     rng = np.random.default_rng(seed)
     q = np.concatenate([np.ones((n, 1)), spread * rng.standard_normal((n, 3))], axis=1)
     return q / np.linalg.norm(q, axis=1, keepdims=True)
@@ -40,9 +40,9 @@ def test_chordal_mean_of_identical_quaternions():
 def test_chordal_mean_ignores_the_double_cover():
     """
     q and -q are the same rotation, so flipping half the labels must not move
-    the mean. This is why the estimator is an eigenvector of sum q q^T and not
-    an arithmetic mean of the quaternion components, which would collapse toward
-    zero on a sign-flipped set.
+    the mean. Hence the eigenvector of sum q q^T rather than an arithmetic mean
+    of the quaternion components, which would collapse toward zero on a
+    sign-flipped set.
     """
     q = _random_quaternions(200, spread=0.3)
     flipped = q.copy()

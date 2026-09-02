@@ -1,13 +1,11 @@
 """
 The named splits, and how to turn one into a dataloader.
 
-Everything downstream - training, evaluation, conformal calibration, the
-reproduction script - agrees on the split names defined here, so there is
-exactly one place that knows which label file backs "lightbox" or "calibration".
-
-Legacy filenames are accepted alongside the canonical ones so an existing copy
-of the prepared subsets (the dated names the published runs wrote) drops in
-without being regenerated.
+Training, evaluation, conformal calibration and the reproduction script all
+agree on the split names defined here, so exactly one place knows which label
+file backs "lightbox" or "calibration". Legacy filenames are accepted alongside
+the canonical ones, so an existing copy of the prepared subsets (under the
+dated names the published runs wrote) drops in without being regenerated.
 """
 
 from __future__ import annotations
@@ -76,10 +74,10 @@ SPLITS: dict[str, Split] = {
 #: Domains the results table reports, in the order Table 1 lists them.
 REPORT_DOMAINS = ("synthetic", "lightbox", "sunlamp")
 
-#: Domains the conformal stage measures coverage on, given a q_hat calibrated on
-#: "calibration". "synthetic" is included only as a sanity check - it was used to
-#: select checkpoints, so it should read slightly ABOVE nominal, and a clean
-#: reading there is not evidence of anything.
+#: Domains the conformal stage measures coverage on, given a q_hat calibrated
+#: on "calibration". "synthetic" is a sanity check only: it selected the
+#: checkpoints, so it should read slightly above nominal, and a clean reading
+#: there is not evidence of anything.
 COVERAGE_DOMAINS = ("in_domain_test", "sunlamp", "lightbox", "synthetic")
 
 
@@ -128,11 +126,9 @@ def build_eval_dataloader(
     local_images: str | Path | None = None,
 ):
     """
-    Dataloader for a split being measured, never shuffled.
-
-    shuffle=False is what lets predictions be joined back to labels by position;
-    the join is still verified on filename downstream, but keeping the order
-    stable means that verification passes rather than papering over a problem.
+    Dataloader for a split being measured, never shuffled, so predictions can
+    be joined back to labels by position. The join is still verified on
+    filename downstream.
     """
     dataset = build_dataset(split_name, paths, transform, labels, local_images)
     return build_dataloader(dataset, train_config or TrainConfig(), shuffle=False)

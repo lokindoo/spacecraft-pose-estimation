@@ -4,17 +4,17 @@ Split-conformal coverage across the domain gap.
 
     python scripts/run_conformal.py
 
-Reads the prediction records written by scripts/evaluate.py - one per arm,
+Reads the prediction records written by scripts/evaluate.py, one per arm,
 covering the calibration, in_domain_test, lightbox, sunlamp and synthetic
-splits - then for each arm:
+splits. For each arm it then
 
-  1. calibrates q_hat ONCE on the fresh synthetic calibration split,
-  2. checks in-domain coverage lands on nominal (the gate),
+  1. calibrates q_hat once on the fresh synthetic calibration split,
+  2. checks that in-domain coverage lands on nominal (the gate),
   3. holds q_hat fixed and measures coverage on the real domains.
 
-Step 2 is not decoration. Fresh synthetic data is exchangeable with calibration
-by construction, so the guarantee MUST hold there. If it does not, the pipeline
-is broken and no real-domain number below it means anything.
+Step 2 is load-bearing. Fresh synthetic data is exchangeable with calibration by
+construction, so the guarantee has to hold there; if it does not, the pipeline is
+broken and no real-domain number below it means anything.
 """
 
 from __future__ import annotations
@@ -93,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
         }
 
     # --- 1. the gate -------------------------------------------------------
-    print(f"In-domain control - does the {1 - args.alpha:.0%} promise hold on fresh synthetic?")
+    print(f"In-domain control: does the {1 - args.alpha:.0%} promise hold on fresh synthetic?")
     print(f"n_calibration = {n_calibration}\n")
 
     in_domain = [
@@ -136,10 +136,10 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- 3. the collapse ---------------------------------------------------
     #
-    # Rotation inflation MUST be read next to the SO(3) share. Rotation error is
-    # bounded by pi, so inflation can never exceed pi/q_hat however badly the
+    # Rotation inflation has to be read next to the SO(3) share. Rotation error
+    # is bounded by pi, so inflation can never exceed pi/q_hat however badly the
     # model degrades. A small rotation inflation therefore means either that the
-    # model is genuinely robust OR that its region already fills most of SO(3)
+    # model is genuinely robust or that its region already fills most of SO(3)
     # and has nowhere left to grow. The last columns tell those two apart.
     print(f"\n\nInflation needed for genuine {1 - args.alpha:.0%} coverage\n")
     print(f"  {'arm':24} {'domain':10} {'trans':>7} {'rot':>7} {'rot cap':>8}   honest rotation region")

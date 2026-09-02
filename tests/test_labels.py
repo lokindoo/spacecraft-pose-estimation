@@ -1,8 +1,8 @@
 """
 Label handling tests.
 
-The quaternion canonicalisation is the one to watch: it is what lets the paper
-say the double cover is removed rather than merely tolerated by the loss.
+The quaternion canonicalisation is the one to watch: it removes the double cover
+rather than leaving the loss to tolerate it.
 """
 
 import json
@@ -28,7 +28,7 @@ def _write_labels(path, records):
 
 def test_load_labels_unpacks_and_orders_columns(tmp_path):
     """
-    Column ORDER is part of the contract - the dataset reads the filename at
+    Column order is part of the contract: the dataset reads the filename at
     position 0 and the seven pose values as columns 1:, so a reordering would
     feed the model quaternions as translations without raising anything.
     """
@@ -73,9 +73,9 @@ def test_canonicalisation_flips_only_the_negative_hemisphere():
 
 def test_canonicalisation_preserves_the_rotation():
     """
-    Flipping the sign must not change the orientation the label encodes - if it
-    did, canonicalisation would be corrupting the dataset rather than
-    disambiguating it.
+    Flipping the sign must not change the orientation the label encodes;
+    otherwise canonicalisation would corrupt the dataset rather than
+    disambiguate it.
     """
     original = np.array([[-0.5, -0.5, 0.5, -0.5]])
     data = pd.DataFrame(original, columns=["q1", "q2", "q3", "q4"])
@@ -88,7 +88,7 @@ def test_canonicalisation_preserves_the_rotation():
 
 def test_translation_normalisation_uses_population_std():
     """
-    ddof=0, matching numpy's default - which is what the published runs used and
+    ddof=0, matching numpy's default, which is what the published runs used and
     what the constants stored in every checkpoint were computed with.
     """
     data = pd.DataFrame({"r1": [1.0, 3.0], "r2": [0.0, 0.0], "r3": [10.0, 20.0]})

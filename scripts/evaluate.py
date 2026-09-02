@@ -7,10 +7,10 @@ domains, and write the prediction record every table and figure reads from.
         --checkpoint <path>/checkpoint_20260723_1342.pt
 
 With --checkpoint omitted, the latest checkpoint in the arm's run directory is
-used. That is the right thing for a quick look and the WRONG thing for a
-reported number: published results use the checkpoint with the best synthetic
-validation rotation error, which is not generally the last one. Pass it
-explicitly, and record it in results/checkpoints.json.
+used. That is right for a quick look and wrong for a reported number: published
+results use the checkpoint with the best synthetic validation rotation error,
+which is not generally the last one. Pass it explicitly, and record it in
+results/checkpoints.json.
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ def resolve_checkpoint(args, paths, config) -> Path:
     found = latest_checkpoint(directory)
     if found is None:
         raise FileNotFoundError(f"no checkpoints in {directory}")
-    print(f"WARNING: using the LATEST checkpoint ({found.name}), not the selected one.")
+    print(f"WARNING: using the latest checkpoint ({found.name}), not the selected one.")
     return found
 
 
@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     model.load_state_dict(checkpoint["model_state_dict"])
 
     # Prefer the constants stored in the checkpoint, but verify them against the
-    # training subset - evaluating with the wrong constants mangles every
+    # training subset: evaluating with the wrong constants mangles every
     # position prediction in a way that still looks plausible.
     fallback_means, fallback_stds = translation_normalisation(
         load_split_labels("train", paths)
@@ -119,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{domain:16} {row['translation_relative']:8.3f} {row['rotation']:8.3f} "
             f"{row['speed_score']:8.3f} {kept}   {row['n']}"
         )
-    print(f"\nchance level for E_R is {CHANCE_LEVEL:.3f} rad - read distances from it.")
+    print(f"\nchance level for E_R is {CHANCE_LEVEL:.3f} rad; read distances from it.")
     return 0
 
 

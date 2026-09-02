@@ -3,14 +3,14 @@ Split-conformal prediction, and the machinery for deciding whether a coverage
 measurement means anything.
 
 Calibrate q_hat once on held-out synthetic data, then hold it fixed while
-measuring coverage everywhere else. Recomputing q_hat per domain would be a
-different (and pointless) experiment - the question is precisely what happens to
-a guarantee calibrated in simulation when the images stop being simulated.
+measuring coverage everywhere else. Recomputing q_hat per domain would answer a
+different question; the one being asked is what happens to a guarantee
+calibrated in simulation when the images stop being simulated.
 
-The scores are Euclidean metres for translation (q_hat reads as a keep-out
-sphere radius) and geodesic angle for rotation (an attitude cone). Both come
-from metrics.py so the conformal analysis and the results table cannot drift
-apart.
+The scores are Euclidean metres for translation, where q_hat reads as a keep-out
+sphere radius, and geodesic angle for rotation, where it is an attitude cone.
+Both come from metrics.py, so the conformal analysis and the results table
+cannot drift apart.
 """
 
 import numpy as np
@@ -34,7 +34,7 @@ __all__ = [
 
 
 def compute_q_hat(scores: list, alpha: float):
-    """Compute conformal coverage quantile corrected by +1."""
+    """The conformal quantile of the calibration scores, with the +1 correction."""
     scores = np.asarray(scores)
     assert np.isfinite(scores).all()
 
@@ -54,7 +54,7 @@ def compute_coverage(scores: list, q_hat: float):
 
 
 def clopper_pearson_interval(count: int, nobs: int):
-    """Compute the Clopper-Pearson interval."""
+    """Exact binomial confidence interval on an observed proportion."""
     return proportion_confint(count, nobs, method="beta")
 
 
@@ -69,20 +69,19 @@ def inflation_factor(real_scores: list, q_hat_synth: float, alpha: float):
 
 def coverage_null(n_calibration: int, n_test: int, alpha: float):
     """
-    Distribution of the observed hit COUNT when the pipeline is correct.
+    Distribution of the observed hit count when the pipeline is correct.
 
-    Two independent things are random here, and only one of them is a binomial:
+    Two independent things are random here, and only one of them is a binomial.
+    First, q_hat is the k-th smallest of n_calibration scores, so the coverage
+    it actually delivers is itself random: conditional on the calibration draw,
+    that coverage is Beta(k, n_calibration + 1 - k). Second, given that
+    coverage, the number of test points landing inside is Binomial(n_test,
+    coverage).
 
-    1. q_hat is the k-th smallest of n_calibration scores, so the coverage it
-       actually delivers is itself random. Conditional on the calibration draw,
-       that true coverage is Beta(k, n_calibration + 1 - k) distributed.
-    2. Given that coverage, the number of test points that land inside is
-       Binomial(n_test, coverage).
-
-    Compounding the two gives a beta-binomial. Treating q_hat as a fixed,
-    known threshold - i.e. using a plain binomial or a Clopper-Pearson
-    interval on the test proportion alone - throws away source 1 and produces
-    an interval that is far too narrow to use as a pass/fail gate.
+    Compounding the two gives a beta-binomial. Treating q_hat as a fixed, known
+    threshold, by using a plain binomial or a Clopper-Pearson interval on the
+    test proportion alone, discards the first source and produces an interval
+    far too narrow to use as a pass/fail gate.
     """
     k = int(np.ceil((n_calibration + 1) * (1 - alpha)))
     assert k <= n_calibration, (

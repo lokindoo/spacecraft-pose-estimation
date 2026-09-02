@@ -1,31 +1,29 @@
 """
-Trivial constant predictors - the anchor the "barely better than chance" claim
+Trivial constant predictors, the anchor the "barely better than chance" claim
 needs.
 
-CHANCE_LEVEL (pi/2 + 2/pi ~ 2.207 rad) is the error of a *uniformly random*
-orientation guess. That is correct arithmetic for a uniform prior, and SPEED+
+CHANCE_LEVEL (pi/2 + 2/pi ~ 2.207 rad) is the error of a uniformly random
+orientation guess, which is the right arithmetic for a uniform prior. SPEED+
 poses are not uniform on SO(3): the Tango mockup is imaged over a constrained
 range of attitudes, so a predictor that ignores the image entirely and always
-emits one fixed pose should beat 2.207. How far it beats it is the number that
-decides whether an arm at 2.048 rad has learned anything at all, or is in fact
-worse than doing nothing.
+emits one fixed pose should beat 2.207. How far it beats it decides whether an
+arm at 2.048 rad has learned anything at all, or is in fact worse than doing
+nothing.
 
-Nothing here touches an image, a checkpoint, or a GPU. Labels only.
+Labels only; nothing here touches an image, a checkpoint, or a GPU.
 
-TWO estimators per quantity, and the distinction is the point:
+There are two estimators per quantity, and the distinction matters:
 
   chordal_mean_quaternion    closed form, the top eigenvector of sum q q^T. It
-                             maximises sum cos^2(theta_i / 2), i.e. minimises a
-                             *squared-chordal* loss. Sign-invariant, so the
-                             double cover cannot move it. This is the estimator
-                             the mock review asked for.
-  best_constant_quaternion   the same thing refined to minimise the metric we
-                             actually report, mean geodesic angle. The paper's
-                             claim is about mean E_R, so the honest anchor is the
-                             constant pose that minimises mean E_R, not one that
-                             minimises a different loss and is quoted under this
-                             one. It starts from the closed form and can only
-                             improve on it.
+                             maximises sum cos^2(theta_i / 2), so it minimises a
+                             squared-chordal loss, and it is sign-invariant, so
+                             the double cover cannot move it.
+  best_constant_quaternion   the same, refined to minimise the metric actually
+                             reported, mean geodesic angle. The claim being
+                             anchored is about mean E_R, so the honest anchor is
+                             the constant pose that minimises mean E_R rather
+                             than one minimising a different loss. It starts
+                             from the closed form and can only improve on it.
 
 The same split applies to translation: the arithmetic mean minimises squared
 metres, while Table 1 reports ||dr|| / ||r||, whose optimum is pulled toward
@@ -51,9 +49,9 @@ def chordal_mean_quaternion(quaternions) -> np.ndarray:
     """
     Closed-form mean orientation: the top eigenvector of sum_i q_i q_i^T.
 
-    Exact and iteration-free. Because each q enters as an outer product, q and
-    -q contribute identically - which is what makes this safe to run on labels
-    whether or not they have been canonicalised.
+    Exact and iteration-free. Each q enters as an outer product, so q and -q
+    contribute identically and the estimator is safe on labels whether or not
+    they have been canonicalised.
     """
     q = np.asarray(quaternions, dtype=float)
     q = q / np.linalg.norm(q, axis=1, keepdims=True)
@@ -62,22 +60,22 @@ def chordal_mean_quaternion(quaternions) -> np.ndarray:
 
 
 def mean_translation(translations) -> np.ndarray:
-    """Arithmetic mean position - the least-squares constant in metres."""
+    """Arithmetic mean position, i.e. the least-squares constant in metres."""
     return np.asarray(translations, dtype=float).mean(axis=0)
 
 
 def best_constant_quaternion(quaternions, start: np.ndarray | None = None) -> np.ndarray:
     """
-    The constant orientation minimising *mean geodesic error* over the labels.
+    The constant orientation minimising mean geodesic error over the labels.
 
     Refines ``chordal_mean_quaternion`` by Nelder-Mead over a three-parameter
-    perturbation applied in the tangent space of the starting quaternion, then
-    renormalising. Four parameters would be one too many - the norm constraint
-    removes a degree of freedom - and a derivative-free search is ample for
-    three unknowns fitted once, offline.
+    perturbation in the tangent space of the starting quaternion, then
+    renormalises. Four parameters would be one too many, since the norm
+    constraint removes a degree of freedom, and a derivative-free search is
+    ample for three unknowns fitted once, offline.
 
-    Never returns something worse than its start: the refined point is accepted
-    only if its mean error is lower.
+    The refined point is accepted only if its mean error is lower, so this
+    never returns something worse than its start.
     """
     q = np.asarray(quaternions, dtype=float)
     q = q / np.linalg.norm(q, axis=1, keepdims=True)
@@ -99,12 +97,12 @@ def best_constant_quaternion(quaternions, start: np.ndarray | None = None) -> np
 
 def best_constant_translation(translations, start: np.ndarray | None = None) -> np.ndarray:
     """
-    The constant position minimising *mean range-normalised error*, the E_T of
+    The constant position minimising mean range-normalised error, the E_T of
     Table 1.
 
     Not the arithmetic mean: dividing by ||r_true|| weights near targets more
     heavily, so the optimum sits closer to the camera than the centroid does.
-    Nelder-Mead from the centroid, accepted only if it improves.
+    Nelder-Mead from the centroid, accepted only if it improves on it.
     """
     r = np.asarray(translations, dtype=float)
     r0 = np.asarray(start, dtype=float) if start is not None else mean_translation(r)
@@ -120,7 +118,7 @@ def best_constant_translation(translations, start: np.ndarray | None = None) -> 
 def constant_predictor_errors(r_constant, q_constant, labels) -> dict[str, float]:
     """
     Score one constant pose against a label frame (``labels.load_labels``
-    output), in exactly the metrics Table 1 reports.
+    output), in the metrics Table 1 reports.
     """
     r_true = labels[TRANSLATION_COLUMNS].to_numpy(dtype=float)
     q_true = labels[QUATERNION_COLUMNS].to_numpy(dtype=float)

@@ -3,14 +3,14 @@ The split pose loss.
 
     L = MSE(t_hat, t) + lambda * (1 - <q_hat, q>^2)
 
-Split, rather than one MSE over all seven outputs, because the translation
-targets are z-scored and the quaternion components are not - a single MSE lets
-translation dominate and rotation barely learns. Splitting the two was the fix
-that took synthetic rotation error from ~1.6 rad into the tens of degrees.
+Split rather than one MSE over all seven outputs, because the translation
+targets are z-scored and the quaternion components are not: a single MSE lets
+translation dominate and rotation barely learns. Separating the two terms took
+synthetic rotation error from ~1.6 rad into the tens of degrees.
 
-The rotation term squares the inner product, which makes it sign-invariant: q
-and -q give the same loss. Combined with canonicalised labels (labels.py), the
-double cover cannot hand the network contradictory targets.
+Squaring the inner product makes the rotation term sign-invariant, so q and -q
+give the same loss. With canonicalised labels (labels.py), the double cover
+cannot hand the network contradictory targets.
 """
 
 from __future__ import annotations
@@ -40,8 +40,8 @@ def pose_loss(
     lambda_rotation: float = 1.0,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Returns ``(total, translation_term, rotation_term)`` so the two halves can be
-    logged separately - useful when diagnosing one drowning the other.
+    Returns ``(total, translation_term, rotation_term)``, so the two halves can
+    be logged separately when diagnosing one drowning the other.
     """
     t_loss = translation_loss(outputs[:, :3], translation_targets)
     r_loss = rotation_loss(outputs[:, 3:], rotation_targets)

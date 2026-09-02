@@ -3,8 +3,8 @@ Tests for what actually distinguishes the four arms of the 2x2.
 
 Two things define an arm: which parameters carry gradients, and which BatchNorm
 layers are in train mode. The second is easy to lose in a refactor and would not
-fail loudly - it would quietly convert every frozen arm into a partially-adapted
-one and erase the comparison the paper rests on.
+fail loudly. It would quietly convert every frozen arm into a partially adapted
+one and erase the comparison the study rests on.
 """
 
 import torch
@@ -75,8 +75,8 @@ def test_unfrozen_arm_adds_layer4(resnet_model):
 def test_frozen_arm_keeps_every_backbone_batchnorm_in_eval(resnet_model):
     """
     A frozen arm must go on using the ImageNet running statistics everywhere in
-    the backbone. If any of them switch to train mode, the arm is silently
-    adapting to the training distribution and is no longer the control.
+    the backbone. If any of them switch to train mode, the arm is adapting to
+    the training distribution and is no longer the control.
     """
     set_train_mode(resnet_model, FROZEN)
 
@@ -89,8 +89,8 @@ def test_frozen_arm_keeps_every_backbone_batchnorm_in_eval(resnet_model):
 
 def test_unfrozen_arm_puts_exactly_layer4_batchnorm_in_train(resnet_model):
     """
-    This is the mechanism of section 3.2: layer 4's BatchNorm statistics track
-    the (augmented) training distribution, which is why augmentation moves
+    The mechanism behind the second finding: layer 4's BatchNorm statistics
+    track the (augmented) training distribution, which is why augmentation moves
     lightbox and leaves sunlamp inside seed noise.
     """
     set_train_mode(resnet_model, UNFROZEN)
@@ -114,8 +114,8 @@ def test_unfrozen_arm_puts_exactly_layer4_batchnorm_in_train(resnet_model):
 
 def test_no_augmentation_train_transform_matches_eval():
     """
-    The no-augmentation arms must train on exactly what they are evaluated on -
-    otherwise the 2x2 has a third, uncontrolled factor in it.
+    The no-augmentation arms must train on exactly what they are evaluated on,
+    or the 2x2 has a third, uncontrolled factor in it.
     """
     train = build_train_transform(AugmentationConfig(enabled=False))
     assert repr(train) == repr(build_eval_transform())
@@ -144,7 +144,7 @@ def test_augmented_transform_order():
 
 
 def test_preview_transform_drops_only_normalisation():
-    """The Figure 2 path: identical stack, still displayable."""
+    """The Figure 1 path: the same stack, still displayable."""
     full = [
         type(t).__name__
         for t in build_train_transform(AugmentationConfig(enabled=True)).transforms

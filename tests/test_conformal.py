@@ -69,10 +69,9 @@ def test_clopper_pearson_interval():
 
 def _simulate_coverage(draw, n, alpha, trials, seed=0):
     """
-    Measure split-conformal coverage by brute force.
-
-    Draw n+1 exchangeable samples, calibrate q_hat on the first n, and check
-    whether the held-out sample falls inside. Repeat and count.
+    Measure split-conformal coverage by brute force: draw n+1 exchangeable
+    samples, calibrate q_hat on the first n, check whether the held-out sample
+    falls inside, then repeat and count.
     """
     rng = np.random.default_rng(seed)
     hits = 0
@@ -84,13 +83,13 @@ def _simulate_coverage(draw, n, alpha, trials, seed=0):
 
 def test_coverage_simulation():
     """
-    The guarantee itself, not an implementation detail.
+    The guarantee itself, rather than an implementation detail.
 
     For continuous scores, coverage is exactly k/(n+1) where
-    k = ceil((n+1)(1-alpha)). n is deliberately SMALL: at n=19 the correct
-    answer is 18/20 = 0.90 and an off-by-one q_hat gives 19/20 = 0.95,
-    a gap of ~37 standard errors. At n=1000 that same gap shrinks to about
-    1 SE and becomes invisible. Do not "improve" this test by raising n.
+    k = ceil((n+1)(1-alpha)). n is deliberately small: at n=19 the correct
+    answer is 18/20 = 0.90 and an off-by-one q_hat gives 19/20 = 0.95, a gap of
+    ~37 standard errors, whereas at n=1000 the same gap shrinks to about 1 SE
+    and becomes invisible. Do not "improve" this test by raising n.
     """
     n, alpha, trials = 19, 0.1, 50_000
     k = int(np.ceil((n + 1) * (1 - alpha)))
@@ -100,18 +99,18 @@ def test_coverage_simulation():
     coverage = _simulate_coverage(lambda r, m: r.standard_normal(m), n, alpha, trials)
 
     assert abs(coverage - expected) < 4 * se
-    # The published two-sided bound. Note it is much looser than the point
-    # prediction above and would NOT catch an off-by-one at this n.
+    # The published two-sided bound. It is much looser than the point prediction
+    # above, and would not catch an off-by-one at this n.
     assert 1 - alpha <= expected <= 1 - alpha + 1 / (n + 1)
 
 
 def test_distribution_independence():
     """
-    Coverage must not depend on the score distribution — that is what makes
+    Coverage must not depend on the score distribution, which is what makes
     conformal usable on pose errors we have never modelled.
 
-    Cauchy has no mean and no variance; exponential is skewed and positive.
-    Both must give the same coverage as the Gaussian case.
+    Cauchy has no mean and no variance; exponential is skewed and positive. Both
+    must give the same coverage as the Gaussian case.
     """
     n, alpha, trials = 19, 0.1, 50_000
     k = int(np.ceil((n + 1) * (1 - alpha)))
@@ -138,8 +137,8 @@ def test_inflation_factor_identity():
     Feeding the same scores as calibration and as "real" must give exactly 1.0.
 
     This catches an estimator mismatch: using np.percentile for the numerator
-    while q_hat uses the corrected order statistic returns 0.988 here, not 1.0.
-    The 2x case pins the direction, so a flipped ratio reads 0.5 not 2.0.
+    while q_hat uses the corrected order statistic returns 0.988 here rather
+    than 1.0. The 2x case pins the direction, so a flipped ratio reads 0.5.
     """
     rng = np.random.default_rng(0)
     scores = rng.standard_normal(1000) ** 2
@@ -151,13 +150,13 @@ def test_inflation_factor_identity():
 
 def _simulate_hit_counts(n_cal, n_test, alpha, trials, seed=0):
     """
-    Run the whole split-conformal pipeline `trials` times on a KNOWN-GOOD
-    setup and return the hit count from each run.
+    Run the whole split-conformal pipeline `trials` times on a known-good setup
+    and return the hit count from each run.
 
-    Calibration and test scores come from the same continuous distribution,
-    so exchangeability holds by construction and there is no bug to detect.
-    Whatever spread shows up here is irreducible - it is what a correct
-    pipeline looks like.
+    Calibration and test scores come from the same continuous distribution, so
+    exchangeability holds by construction and there is no bug to detect.
+    Whatever spread shows up here is irreducible: it is what a correct pipeline
+    looks like.
     """
     rng = np.random.default_rng(seed)
     k = int(np.ceil((n_cal + 1) * (1 - alpha)))
@@ -170,9 +169,8 @@ def _simulate_hit_counts(n_cal, n_test, alpha, trials, seed=0):
 def test_coverage_null_matches_simulation():
     """
     The analytic null must reproduce what the pipeline actually does.
-
-    coverage_null claims the hit count is beta-binomial. This runs the real
-    thing thousands of times and checks the first two moments agree.
+    coverage_null claims the hit count is beta-binomial, so this runs the real
+    thing thousands of times and checks that the first two moments agree.
     """
     n_cal, n_test, alpha, trials = 200, 200, 0.1, 4000
     counts = _simulate_hit_counts(n_cal, n_test, alpha, trials)
@@ -185,12 +183,12 @@ def test_coverage_null_matches_simulation():
 
 def test_coverage_null_is_wider_than_binomial():
     """
-    Pin the actual bug this replaced.
+    Pin the bug this replaced.
 
-    q_hat is estimated, not given. With equal calibration and test sizes the
-    calibration draw contributes about as much variance as the test draw, so
-    the honest spread is ~sqrt(2) times the binomial one. A gate built on the
-    binomial spread alone is too narrow by that factor and cries wolf.
+    q_hat is estimated rather than given. With equal calibration and test sizes
+    the calibration draw contributes about as much variance as the test draw, so
+    the honest spread is ~sqrt(2) times the binomial one, and a gate built on the
+    binomial spread alone is too narrow by that factor.
     """
     n, alpha = 1000, 0.1
     p = 1 - alpha
@@ -204,8 +202,8 @@ def test_gate_false_alarm_rate():
 
     Asserted both ways: the beta-binomial region fires at roughly its nominal
     rate, while the Clopper-Pearson interval on the test proportion fires on
-    something like one measurement in six. At 16 measurements that CP gate is
-    near-certain to fail on a pipeline with nothing wrong with it.
+    something like one measurement in six. Across 16 measurements, that
+    Clopper-Pearson gate is near-certain to fail on a sound pipeline.
     """
     n_cal, n_test, alpha, trials = 200, 200, 0.1, 4000
     counts = _simulate_hit_counts(n_cal, n_test, alpha, trials)
@@ -243,10 +241,10 @@ def test_coverage_null_degenerate_alpha():
 
 def test_nan_in_scores():
     """
-    A single NaN score must raise, not propagate.
+    A single NaN score must raise rather than propagate.
 
-    Left unguarded, one diverged prediction makes q_hat NaN, then every
-    `score <= nan` is False and coverage reads 0% — which looks like a
+    Left unguarded, one diverged prediction makes q_hat NaN, every
+    `score <= nan` is then False, and coverage reads 0%, which looks like a
     spectacular finding rather than a data problem.
     """
     nan_scores = np.array([1.0, 2.0, np.nan, 4.0])

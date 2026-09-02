@@ -5,13 +5,13 @@ Check by eye that the labels mean what you think they mean.
     python scripts/verify_labels.py --split synthetic --count 4
 
 Projects each pose onto its image: a dot at the target's predicted image
-position, and the three body axes drawn from it. If the dot sits on the
+position, with the three body axes drawn from it. If the dot sits on the
 spacecraft and the axes look attached to it, the label convention, the camera
 matrix and the quaternion-to-matrix conversion all agree.
 
-Worth running before any training run and after any change to label loading.
-A quaternion convention error (scalar-first versus scalar-last, or a transposed
-rotation) produces a model that trains perfectly happily and is wrong, and this
+Worth running before any training run and after any change to label loading. A
+quaternion convention error, scalar-first versus scalar-last or a transposed
+rotation, produces a model that trains perfectly happily and is wrong, and this
 is the cheapest place to catch it.
 """
 
@@ -40,11 +40,10 @@ def project_point(point_3d: np.ndarray, camera_matrix: np.ndarray) -> np.ndarray
 
 def quaternion_to_matrix(q: np.ndarray) -> np.ndarray:
     """
-    SPEED+ quaternions are scalar-FIRST (w, x, y, z).
-
-    scipy is scalar-last by default, so the conversion is explicit. Getting this
-    wrong yields a valid rotation matrix for a different rotation - which no
-    assertion catches, but the overlay does.
+    SPEED+ quaternions are scalar-first (w, x, y, z), whereas scipy is
+    scalar-last by default, so the convention is stated explicitly. Getting it
+    wrong yields a valid rotation matrix for a different rotation, which no
+    assertion catches but the overlay does.
     """
     return Rotation.from_quat(q, scalar_first=True).as_matrix()
 
@@ -75,8 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         "--raw",
         action="store_true",
         help="Overlay on the full-resolution originals instead of the downscaled "
-        "subset. The camera matrix belongs to the ORIGINAL resolution, so this is "
-        "the honest check; the downscaled version is scaled to match.",
+        "subset. The camera matrix belongs to the original resolution, so this "
+        "is the stricter check; the downscaled version is scaled to match.",
     )
     parser.add_argument("--output", default=None, help="Save instead of showing")
     args = parser.parse_args(argv)

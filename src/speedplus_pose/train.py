@@ -3,12 +3,11 @@ The training loop, with resume.
 
 Resume is not a nicety here: the study ran on free-tier Colab, where a session
 can vanish mid-run. Checkpoints are written on even epochs to a directory that
-survives the session, and a restart picks up the latest one.
+outlives the session, and a restart picks up the latest one.
 
-Checkpoint SELECTION - which of the saved epochs becomes "the model" - happens
-later and is a separate decision: the checkpoint with the best *synthetic*
-validation rotation error, applied uniformly to every arm. No real-domain number
-is allowed anywhere near it.
+Which saved epoch becomes "the model" is a separate decision, taken later: the
+checkpoint with the best synthetic validation rotation error, applied uniformly
+to every arm, with no real-domain number involved.
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ from .normalisation import TranslationNormaliser
 
 @dataclass
 class TrainingHistory:
-    """Everything the loop accumulates, carried through checkpoints."""
+    """What the loop accumulates, carried through checkpoints."""
 
     train_losses: list[float] = field(default_factory=list)
     validation_translation_errors: list[float] = field(default_factory=list)
@@ -42,7 +41,7 @@ class TrainingHistory:
         return len(self.train_losses)
 
     def best_epoch(self) -> int:
-        """Index of the lowest validation rotation error - the selection rule."""
+        """Index of the lowest validation rotation error, i.e. the selection rule."""
         return int(np.argmin(self.validation_rotation_errors))
 
 
@@ -76,9 +75,8 @@ def save_checkpoint(
 
 def latest_checkpoint(directory: Path) -> Path | None:
     """
-    Most recent checkpoint in a run directory.
-
-    Filenames are UTC timestamps, so lexical order is chronological order.
+    Most recent checkpoint in a run directory. Filenames are UTC timestamps, so
+    lexical order is chronological order.
     """
     checkpoints = sorted(directory.glob("checkpoint_*.pt"))
     return checkpoints[-1] if checkpoints else None
@@ -104,7 +102,7 @@ def evaluate_epoch(
         outputs = model(inputs)
 
         r_pred = normaliser.remove(outputs[:, :3])
-        # The quaternion half is NOT un-normalised - it is trained raw and unit.
+        # The quaternion half is not un-normalised; it is trained raw and unit.
         q_pred = outputs[:, 3:]
         q_pred = q_pred / torch.norm(q_pred, dim=1, keepdim=True)
 
@@ -151,8 +149,8 @@ def train(
 
     for epoch in range(start_epoch, config.train.epochs):
         started = time.time()
-        # Sets the per-arm BatchNorm regime. See model.set_train_mode - this is
-        # what distinguishes the frozen arms from the unfrozen ones.
+        # Sets the per-arm BatchNorm regime, which is what distinguishes the
+        # frozen arms from the unfrozen ones. See model.set_train_mode.
         set_train_mode(model, config.model)
 
         running_loss = 0.0

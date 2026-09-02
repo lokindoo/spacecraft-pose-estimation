@@ -4,41 +4,39 @@ Regenerate the paper's figures.
 
     python scripts/make_figures.py --all
 
-  --crops-triptych   Figure 1: three labelled columns - augmented synthetic,
-                     lightbox, sunlamp - with an intensity-histogram strip
+  --crops-triptych   Figure 1: three labelled columns (augmented synthetic,
+                     lightbox, sunlamp) with an intensity-histogram strip
                      underneath. Needs the prepared image subsets.
   --reliability      Figure 2: conformal reliability curves. Needs the
                      prediction records from scripts/evaluate.py.
-  --rotation-error   Not in the paper any more: rotation error per arm and
-                     domain against the chance level. Reads
-                     results/results_2x2.csv, so it needs no data and no GPU.
-  --crops            Not in the paper any more: two bare grids, augmented
-                     synthetic beside real. This is what --crops-triptych
-                     replaced; kept because earlier drafts shipped its PNGs.
+  --rotation-error   No longer in the paper: rotation error per arm and domain
+                     against the chance level. Reads results/results_2x2.csv,
+                     so it needs no data and no GPU.
+  --crops            No longer in the paper: two bare grids, augmented synthetic
+                     beside real. This is what --crops-triptych replaced, kept
+                     because earlier drafts shipped its PNGs.
 
-Figure 1 is the one that carries the argument: the augmented distribution is a
-poor model of BOTH real domains and a markedly less poor one of the diffuse
-lightbox, which is why augmentation moves one and not the other. It is worth
-regenerating whenever the augmentation changes.
+Figure 1 carries the argument: the augmented distribution is a poor model of
+both real domains and a markedly less poor one of the diffuse lightbox, which is
+why augmentation moves one and not the other. Worth regenerating whenever the
+augmentation changes.
 
-The exact invocations the published PNGs came from - reproduce them with these,
-not with the bare defaults:
+The published PNGs came from these exact invocations rather than the bare
+defaults:
 
     python scripts/make_figures.py --crops-triptych --seed 7 --triptych-rows 3 \
         --histogram-pool all --triptych-suffix _poolall
     python scripts/make_figures.py --reliability --arms unfrozen_no_aug_seed42 \
         --reliability-metrics rotation --font-scale 1.0
 
-Two things about Figure 1 that are easy to get wrong, and both were:
-
-  * --histogram-pool decides whether the strip measures the DOMAIN or only the
-    three crops on display. At a pool of three a column sits 0.12-0.35 total
-    variation from its own distribution, the same order as the between-domain
-    difference the figure exists to show. 500 is within 0.019 of the full
-    split; the paper used `all`.
-  * --seed alone did not reproduce the figure until torch's global RNG was
-    seeded alongside numpy's - the crops were picked identically and augmented
-    differently on every run.
+Two details of Figure 1 are easy to get wrong, and both were. --histogram-pool
+decides whether the strip measures the domain or only the three crops on
+display: at a pool of three, a column sits 0.12-0.35 total variation from its own
+distribution, the same order as the between-domain difference the figure exists
+to show, while 500 is within 0.019 of the full split and the paper used `all`.
+And --seed alone did not reproduce the figure until torch's global RNG was
+seeded alongside numpy's, since the crops were picked identically and augmented
+differently on every run.
 
 --font-scale 1.0 is deliberate for Figure 2: at 1.2 and above, tight_layout
 clips the x-axis label. A single panel is already twice as wide as each of the
@@ -102,8 +100,8 @@ def figure_crops(paths, output_dir: Path, samples: int, seed: int, local_images)
     """
     Two grids: augmented synthetic training samples, and real test samples.
 
-    The augmented grid uses preview=True so it renders - the stack is otherwise
-    identical to what the augmented arms trained on, normalisation aside.
+    The augmented grid uses preview=True so that it renders; normalisation
+    aside, the stack is what the augmented arms trained on.
     """
     config = load_config("unfrozen_aug")
     rng = np.random.default_rng(seed)
@@ -151,10 +149,9 @@ def _pick(dataset, filenames: list[str] | None, rng, count: int) -> list[int]:
     Indices of the crops to draw: the named ones if given, otherwise a random
     sample.
 
-    Naming them is the point for the paper's figure. Which sunlamp frames go in
-    is an editorial choice - you want ones showing saturation and hard shadow
-    boundaries, not merely bright ones - and a random draw will not reliably
-    make that argument.
+    The paper's figure names them. Which sunlamp frames go in is an editorial
+    choice, since what is wanted is saturation and hard shadow boundaries rather
+    than merely bright frames, and a random draw will not reliably supply that.
     """
     if not filenames:
         return [int(i) for i in rng.choice(len(dataset), count, replace=False)]
@@ -170,10 +167,10 @@ def _pick(dataset, filenames: list[str] | None, rng, count: int) -> list[int]:
 def _histogram_pool(dataset, size, rng):
     """
     Images to accumulate one column's intensity histogram over, as a generator.
+    ``size`` None means the whole split.
 
-    ``size`` None means the whole split. The generator matters: the caller keeps
-    only bin counts, so a 28,000-image pool costs one image of memory rather than
-    the ~37 GB the pixels would take.
+    The generator matters: the caller keeps only bin counts, so a 28,000-image
+    pool costs one image of memory rather than the ~37 GB the pixels would take.
     """
     if size is None:
         indices = range(len(dataset))
@@ -186,19 +183,20 @@ def figure_crops_triptych(paths, output_dir: Path, chosen: dict, samples: int, s
     """
     Figure 1: three labelled columns with an intensity-histogram strip
     underneath. This replaced the two bare grids earlier drafts pasted side by
-    side (still available as --crops).
+    side, still available as --crops.
 
-    Columns are (augmented synthetic | lightbox | sunlamp) so the two real
-    domains sit next to each other and the eye compares them directly, and the
-    augmented column's pixel distribution is overlaid on both histograms - which
-    is what makes "the augmented distribution is far from both real domains and
-    closer to lightbox" a measurement rather than a request to trust the crops.
+    Columns run (augmented synthetic | lightbox | sunlamp), so the two real
+    domains sit next to each other and can be compared directly, and the
+    augmented column's pixel distribution is overlaid on both histograms. That
+    overlay is what makes "the augmented distribution is far from both real
+    domains and closer to lightbox" a measurement rather than a request to trust
+    the crops.
     """
     config = load_config("unfrozen_aug")
     rng = np.random.default_rng(seed)
     # The augmentation stack draws from torch's global RNG, so without this the
-    # same --seed picks the same base images but augments them differently every
-    # run - the published figure was not reproducible from its own command.
+    # same --seed picks the same base images but augments them differently on
+    # every run, and the figure is not reproducible from its own command.
     torch.manual_seed(seed)
     columns = {}
     datasets = {}
@@ -226,9 +224,9 @@ def figure_crops_triptych(paths, output_dir: Path, chosen: dict, samples: int, s
             dataset[i][0].numpy() for i in _pick(dataset, chosen.get(domain), rng, samples)
         ]
 
-    # Without a pool the strip measures the three crops on display, which is a
-    # sample of three - change the draw and the columns stop separating. With one
-    # it measures the domain, and the crops go back to being illustration.
+    # Without a pool the strip measures only the three crops on display: change
+    # the draw and the columns stop separating. With one it measures the domain,
+    # and the crops go back to being illustration.
     pools = None
     if pool != "crops":
         size = None if pool == "all" else int(pool)
@@ -247,8 +245,8 @@ def figure_crops_triptych(paths, output_dir: Path, chosen: dict, samples: int, s
     )
     print(
         f"  crops_triptych{suffix}.png: pick the crops deliberately with --crop-sunlamp / "
-        "--crop-lightbox /\n  --crop-synthetic once you have seen a draw you like "
-        "- sunlamp wants saturation and hard\n  shadow boundaries, not merely "
+        "--crop-lightbox /\n  --crop-synthetic once you have seen a draw you like. "
+        "Sunlamp wants saturation and hard\n  shadow boundaries, not merely "
         "bright frames."
     )
 
@@ -298,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
         default="500",
         help="Images per column the intensity histograms are accumulated over: a "
         "count, 'all' for the whole split, or 'crops' for the old behaviour of "
-        "using only the crops on display (a sample of three - do not publish it)",
+        "using only the crops on display (a sample of three; do not publish it)",
     )
     parser.add_argument(
         "--triptych-suffix", default="", help="Appended to crops_triptych<suffix>.png"
@@ -323,8 +321,8 @@ def main(argv: list[str] | None = None) -> int:
         "--reliability-metrics",
         nargs="+",
         default=["translation_metres", "rotation"],
-        help="Panels to draw. The paper's Figure 2 is 'rotation' alone - one "
-        "panel at column width, legible; two are not.",
+        help="Panels to draw. The paper's Figure 2 is 'rotation' alone, since one "
+        "panel is legible at column width and two are not.",
     )
     parser.add_argument(
         "--font-scale",
@@ -338,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
     if not any(
         (args.rotation_error, args.crops, args.crops_triptych, args.reliability, args.all)
     ):
-        parser.error("nothing to do - pass --all or one of the figure flags")
+        parser.error("nothing to do; pass --all or one of the figure flags")
 
     # --rotation-error needs no dataset, so allow it to run without a data root.
     needs_data = args.all or args.crops or args.crops_triptych or args.reliability
