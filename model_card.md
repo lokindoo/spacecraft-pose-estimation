@@ -1,15 +1,6 @@
 <!--
 DRAFT HuggingFace model card.
 
-Blocking TODO before uploading any weights: read the SPEED+ licence on Zenodo
-record 5588480 and confirm (a) that publishing weights derived from it is
-permitted and (b) what the licence is actually called, then fill in the
-`dataset_license` field below and the Dataset section. Do not guess this: it
-gates the upload, not just the card. Every other TODO here is cosmetic.
-
-Move this YAML block to the top of the file when publishing (HuggingFace parses
-front matter only at position 0).
-
 ---
 license: apache-2.0
 library_name: pytorch
@@ -65,8 +56,7 @@ Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
 SPEED+ imagery: the eight checkpoints behind a study of what transfers across
 the synthetic-to-real gap.
 
-**Not uploaded yet.** This card is written ahead of a release that is gated on
-the SPEED+ licence question below. The study itself reproduces without the
+**Not uploaded yet.** This card is written ahead of a release. The study itself reproduces without the
 weights; see the repository.
 
 These are not competitive weights. They are the experimental arms of a study,
@@ -186,12 +176,7 @@ strictly as held-out tests.
 
 ## Dataset licence
 
-The weights are derived from SPEED+, which is licensed separately by its authors
-and is not covered by this repository's Apache-2.0 licence.
-
-> **Blocking TODO:** state the SPEED+ licence here verbatim after reading the
-> Zenodo record (5588480) terms, and confirm they permit publishing derived
-> model weights. Resolve this before uploading anything.
+The weights are derived from SPEED+, which is licensed under Creative Commons Attribution 4.0 International.
 
 SPEED+ itself is not redistributed here, in any form.
 

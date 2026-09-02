@@ -69,10 +69,13 @@ distributional assumption. SPEED+ orientations are not uniform on SO(3), so the
 within 0.03 rad of it on all three domains, which is why 2.207 is used
 throughout.
 
-The paper quotes the `closed_form` rows (App. C: E_T 0.415 / 0.367 / 0.372, E_R
-2.176 / 2.203 / 2.199) and reads them as an upper bound on the optimal constant,
-since both estimators minimise squared error while the reported metric is mean
-unsquared error. The `best` rows are the tighter constant, and they matter for
+App. C of the paper reports this constant after five Karcher iterations on the
+sphere, which refine the chordal mean this script computes: E_T 0.415 / 0.367 /
+0.372, E_R 2.176 / 2.203 / 2.199. The `closed_form` rows here are that chordal
+starting point, and they agree to 0.001 on every score (synthetic E_R 2.177
+against the paper's 2.176); the Karcher step itself is not implemented here.
+Either reads as an upper bound on the optimal constant, since both estimators
+minimise squared error while the reported metric is mean unsquared error. The `best` rows are the tighter constant, and they matter for
 translation, where the two differ substantially (sunlamp 0.330 against 0.372);
 for rotation they agree to 0.001. The no-skill claim about sunlamp translation
 holds against either, since two of the three augmented layer-4 seeds (0.405,

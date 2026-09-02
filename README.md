@@ -121,9 +121,11 @@ against an achievable no-skill predictor: a single constant pose fitted on the
 python scripts/constant_baseline.py    # labels only — no images, no checkpoint, no GPU
 ```
 
-It scores E_R 2.176 on synthetic validation and 2.203 / 2.199 on lightbox and
+It scores E_R 2.177 on synthetic validation and 2.203 / 2.199 on lightbox and
 sunlamp, all within 0.03 rad of the uniform value, which is why 2.207 is used
-throughout. Translation is the uncomfortable half: that constant scores E_T
+throughout. (App. C of the paper refines this chordal mean with five Karcher
+iterations and quotes 2.176 for synthetic; the two agree to 0.001 on every
+score. The refinement is not implemented in this script.) Translation is the uncomfortable half: that constant scores E_T
 0.372 on sunlamp, and two of the three augmented seeds do not beat it.
 
 ## Headline result

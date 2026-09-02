@@ -10,13 +10,12 @@ type: software
 authors:
   - given-names: Nikolay
     family-names: Dolgov
-    # TODO before release: affiliation, email, ORCID
-    # affiliation: ""
+    affiliation: "Independent Researcher"
+    email: "niko.dolgow@gmail.com"
     # orcid: "https://orcid.org/0000-0000-0000-0000"
 repository-code: "https://github.com/lokindoo/spacecraft-pose-estimation"
 license: Apache-2.0
 version: 1.0.0
-# TODO: set to the date the v1.0.0 tag is cut, matched to arXiv v1
 date-released: "2026-09-01"
 keywords:
   - spacecraft pose estimation
