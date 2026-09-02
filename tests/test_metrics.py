@@ -77,9 +77,9 @@ def test_chance_level():
 
 
 def test_skill_is_distance_below_chance():
-    """1.63 and 2.07 rad look close; as skill they are 0.57 and 0.13."""
-    assert np.allclose(skill([1.63, 2.07]), [CHANCE_LEVEL - 1.63, CHANCE_LEVEL - 2.07])
-    assert np.isclose(skill([1.63])[0], 0.577, atol=1e-3)
+    """1.67 and 2.07 rad look close; as skill they are 0.54 and 0.14."""
+    assert np.allclose(skill([1.67, 2.07]), [CHANCE_LEVEL - 1.67, CHANCE_LEVEL - 2.07])
+    assert np.isclose(skill([1.67])[0], 0.537, atol=1e-3)
     assert np.isclose(skill([2.07])[0], 0.137, atol=1e-3)
 
 

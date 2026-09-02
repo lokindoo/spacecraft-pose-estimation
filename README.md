@@ -1,9 +1,10 @@
-# Robust in the Wrong Direction
+# Unreasonable Confidence from Simulator Misspecification
 
-**A sim-to-real study of monocular spacecraft pose estimation on SPEED+.**
+**Directional robustness on the SPEED+ sim-to-real benchmark.**
 
-Augmentation buys robustness only in the direction you augment — and the model
-cannot tell you when it has stopped working.
+A photometric augmentation stack is a guess at *how a simulator is wrong*. This
+is a study of what happens when the guess is wrong: robustness arrives only in
+the direction you augmented, and the model's confidence does not warn you.
 
 <!-- TODO before release: add badges once arXiv and HuggingFace are live.
      [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
@@ -12,7 +13,7 @@ cannot tell you when it has stopped working.
 
 ---
 
-## The problem
+## An imperfect scientific model
 
 A spacecraft sent to service, inspect, or de-orbit another satellite has to
 estimate the pose of its target — position and orientation, six degrees of
@@ -21,14 +22,32 @@ freedom — from its own cameras, in real time, under a fuel budget.
 The target is *uncooperative*: no markers, no transponder, no help. And there
 are essentially no labelled photographs of it in orbit, because taking them
 would require having already solved the problem. So the estimator is trained on
-renderings and meets its real test distribution for the first time during the
-mission.
+the output of a simulator and deployed against the physical system that
+simulator only approximates.
 
-## Why sim-to-real is the whole risk
+That simulator is a physically-based renderer, and it is mechanistic in the same
+sense as a molecular-dynamics or a climate model: it numerically solves the
+**rendering equation**, an energy-balance integral equation for radiative
+transfer. Its approximations sit in the constitutive closure — the bidirectional
+reflectance distribution function, an analytic microfacet fit standing in for
+the true reflectance of multi-layer insulation and machined aluminium.
 
-That gap is not a rounding error. In SPEC2021, the competition run on this
-benchmark, the winning entry's pose score degraded roughly **40×** between
-synthetic validation and real hardware-in-the-loop imagery.
+**The transport equation is right; the material model is where it is wrong.**
+That is the same posture as an empirical force field in molecular dynamics, or a
+sub-grid parametrisation in a climate model.
+
+The resulting error is *radiometric, not geometric*. Ranges and pose
+distributions are matched across the benchmark's domains. What differs is that
+mylar and machined metal return specular, non-Lambertian reflections, which a
+collimated source turns into hard shadow boundaries and saturated pixels — and
+saturation is not a reflectance error at all. It is a misspecified **observation
+operator**, arising in the detector rather than in light transport.
+
+## What the misspecification costs
+
+Not a rounding error. In SPEC2021, the competition run on this benchmark, the
+winning entry's pose score degraded roughly **40×** between synthetic validation
+and real hardware-in-the-loop imagery.
 
 [SPEED+](https://zenodo.org/records/5588480) exists to study exactly this. It
 pairs ~60,000 labelled synthetic images of the Tango spacecraft with ~9,500 real
@@ -40,6 +59,24 @@ images of a physical mockup under two illumination regimes:
 This study asks a narrower question than "how well can we do": **what actually
 transfers?** Not how much a gain helps in simulation, but which gains survive
 the crossing, and whether the model's own confidence survives with them.
+
+## The discrepancy model
+
+The standard response to a misspecified simulator is not to fix the forward
+model but to smear the training data over the ways it might be wrong. A
+photometric augmentation stack — brightness and contrast jitter, log-uniform
+gamma, a soft clamped "sun glare" blob, blur, noise, random erasing — is
+therefore **a discrepancy model**: an unvalidated guess at the
+simulator-to-reality residual, imposed as a distribution the training data is
+smeared over rather than as a correction to the forward model.
+
+It is unvalidated in a way that is hard to escape. Measuring the residual it
+claims to model would take the real labelled images whose absence created the
+problem in the first place.
+
+So the guess goes in untested, and this repository is about what happens when it
+is wrong. The answer is not only a loss of accuracy. It is the **silent loss of
+calibration** — finding 3 below.
 
 ## Approach
 
@@ -126,12 +163,9 @@ the representation did.**
 
 ### 2. Augmentation is directional — it helps in the direction it models
 
-The photometric stack — brightness/contrast jitter, log-uniform gamma, a soft
-clamped "sun glare" blob, blur, noise, random erasing — was built in good faith
-to anticipate harsh real illumination.
-
-It doesn't model harsh illumination. It models **diffuse** illumination
-variation, which is lightbox:
+The discrepancy model above was built in good faith to anticipate harsh real
+illumination. It does not model harsh illumination. It models **diffuse**
+illumination variation, which is lightbox:
 
 - **Lightbox**: improves on every seed (−0.183, −0.185, −0.170 rad). 3/3, ~15%.
 - **Sunlamp**: the paired differences *change sign* (+0.116, −0.265, −0.047).
@@ -190,6 +224,13 @@ operationally meaningless.
 The guarantee is intact throughout. Exchangeability is what broke. **A navigation
 filter fed these poses receives wrong inputs that look exactly as confident as
 correct ones.**
+
+Which is the point of all three findings together. For any field where synthetic
+data is a necessity, the question to ask of a robustness intervention is not
+"how much does it help?", but **"which way does it push the training
+distribution — and is that where it must be pushed?"** Uncertainty has to be
+validated under the shift it protects against, or a wrong pose arrives wrapped
+in a confident interval.
 
 ## Limitations
 

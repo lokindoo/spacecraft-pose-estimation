@@ -10,13 +10,24 @@ validation split.
         --control-labels "<drive>/data/synthetic_subset_20260624/validation_subset_20260624.json" \
         --control-images "/content/legacy_synthetic"
 
-WHY. Section 3.1's headline, 1.63 -> 1.05 rad, bundles three changes at once:
-4k -> 28k images, ImageNet logits -> pooled 2048-d features, and a change of
-validation split (the earlier one was a 1,000-image split drawn from
-training.json). Footnote 1 concedes the third rather than removing it. Scoring
-the old checkpoint on the *current* split removes it: what is left is a two-way
-confound between data and features, which the 4k/2048-d intermediate point
-(1.31 rad) then decomposes. Inference only - minutes, one GPU, no training.
+WHY. Section 3.1's headline used to read 1.63 -> 1.05 rad, which bundled three
+changes at once: 4k -> 28k images, ImageNet logits -> pooled 2048-d features,
+and a change of validation split (the earlier one was a 1,000-image split drawn
+from training.json). A footnote conceded the third rather than removing it.
+Scoring the old checkpoint on the *current* split removes it, and that is what
+this script did.
+
+THE ANSWER, since this run has happened: the control reproduced the published
+1.634 exactly, and on the current 2,000-image split the same checkpoint scores
+E_T 0.098, E_R 1.666. So the paper reports the single-split comparison,
+1.67 -> 1.05 = 0.61 rad, and the split footnote is gone. Re-run this only to
+re-verify that number.
+
+What is left in the headline is a two-way confound between data and features.
+The 4k/2048-d intermediate point that would decompose it (1.31 rad) is still on
+the *old* split, so the paper does not quote it - reinstating it needs a third
+eval path for that architecture/era, which neither this script nor evaluate.py
+provides. Inference only - minutes, one GPU, no training.
 
 If the checkpoint is gone, say so and stop: the fallback is to soften the number
 in the text, not to reconstruct the model from memory.
@@ -239,9 +250,9 @@ def main(argv: list[str] | None = None) -> int:
         report(domain, evaluate(model, dataloader, means, stds, device, domain))
 
     print(
-        "\nThe synthetic row is the de-confounded starting point for section 3.1: "
-        "quote\n1.05 rad against it rather than against 1.63, and delete the "
-        "split footnote."
+        "\nThe synthetic row is the de-confounded starting point for section 3.1. "
+        "The published\nrun gave E_R 1.666, which is why the paper quotes "
+        "1.67 -> 1.05 rad (0.61) on one split, with no split footnote."
     )
     return 0
 
