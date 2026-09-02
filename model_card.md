@@ -62,14 +62,18 @@ model-index:
 # SPEED+ Pose Estimator — sim-to-real study checkpoints
 
 Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
-SPEED+ imagery, released as the eight checkpoints behind a study of what
-transfers across the synthetic-to-real gap.
+SPEED+ imagery: the eight checkpoints behind a study of what transfers across
+the synthetic-to-real gap.
+
+**Not uploaded yet.** This card is written ahead of a release that is gated on
+the SPEED+ licence question below. The study itself reproduces without the
+weights; see the repository.
 
 These are not competitive weights. They are the experimental arms of a study,
-published so that its table can be regenerated rather than taken on trust.
+and exist so that its table can be regenerated rather than taken on trust.
 
 Code, configs and the reproduction script:
-**TODO: repository URL**
+https://github.com/lokindoo/spacecraft-pose-estimation
 
 ## Checkpoints
 

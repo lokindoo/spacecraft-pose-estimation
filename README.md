@@ -138,7 +138,8 @@ frozen arms are single-seed (†).
 | layer 4 | — | 0.036±0.002 | 0.317±0.010 | 0.169±0.027 | 1.166±0.018 | 0.311±0.036 | 1.534±0.075 |
 | layer 4 | ✓ | 0.042±0.002 | 0.322±0.027 | 0.150±0.017 | **0.987±0.010** | 0.355±0.081 | 1.468±0.119 |
 
-Regenerate this table from the released checkpoints:
+Regenerate this table from the trained checkpoints (not published yet — see
+[Reproduce the table](#4-reproduce-the-table)):
 
 ```bash
 python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
@@ -289,7 +290,7 @@ python scripts/verify_labels.py --split synthetic --count 4   # eyeball the pose
 
 ### 4. Reproduce the table
 
-The fast path, from the released checkpoints:
+The fast path, from the trained checkpoints:
 
 ```bash
 python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
@@ -297,6 +298,13 @@ python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
 
 It re-runs inference for all eight arms, rebuilds Table 1, and diffs it against
 `results/results_2x2.csv` row by row, exiting non-zero on any disagreement.
+
+> **The weights are not published yet.** Uploading weights derived from SPEED+
+> is gated on its licence terms; see [model_card.md](model_card.md). Until that
+> is resolved, this path needs checkpoints you trained yourself, and
+> `results/checkpoints.json` records which run each published row came from.
+> Everything else reproduces from this repository alone: the results CSVs, the
+> conformal analysis, the constant-pose baseline, and both paper figures.
 
 ### 5. Or retrain from scratch
 
@@ -328,9 +336,9 @@ python scripts/make_figures.py --reliability --arms unfrozen_no_aug_seed42 \
 > **Retraining will not bit-reproduce the published checkpoints.** The original
 > runs seeded `torch` only, leaving numpy, `random`, and the DataLoader workers
 > unseeded. `set_seed()` now seeds all of them, but that changes the RNG stream
-> rather than recovering the old one. Reproduce from the checkpoints; retrain to
-> confirm the *findings*, which are seed-stable by design, and which is why the
-> unfrozen arms are run three times.
+> rather than recovering the old one. Reproduce from the checkpoints if you
+> have them; otherwise retrain to confirm the *findings*, which are seed-stable
+> by design, and which is why the unfrozen arms are run three times.
 
 Add `--smoke` to `train.py` for a two-minute CPU wiring check on 32 images.
 

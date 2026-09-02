@@ -3,9 +3,9 @@ title: >-
   Unreasonable Confidence from Simulator Misspecification: Directional
   Robustness on the SPEED+ Sim-to-Real Benchmark
 message: >-
-  If you use this code or the released checkpoints, please cite the
-  paper. If you use the SPEED+ dataset, cite Park et al. as well (see
-  references below) - this repository redistributes none of it.
+  If you use this code, please cite the paper. If you use the SPEED+
+  dataset, cite Park et al. as well (see references below) - this
+  repository redistributes none of it.
 type: software
 authors:
   - given-names: Nikolay
@@ -13,7 +13,7 @@ authors:
     # TODO before release: affiliation, email, ORCID
     # affiliation: ""
     # orcid: "https://orcid.org/0000-0000-0000-0000"
-repository-code: "https://github.com/TODO/spacecraft-pose-estimator"
+repository-code: "https://github.com/lokindoo/spacecraft-pose-estimation"
 license: Apache-2.0
 version: 1.0.0
 # TODO: set to the date the v1.0.0 tag is cut, matched to arXiv v1

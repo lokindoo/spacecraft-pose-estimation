@@ -12,7 +12,7 @@
     "with the hash of each file, so a reproducer can verify they have the same",
     "weights. Compute with: python -c \"import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())\" <ckpt>"
   ],
-  "study": "Robust in the Wrong Direction: Augmentation and Uncertainty Under Sim-to-Real Shift in Spacecraft Pose Estimation",
+  "study": "Unreasonable Confidence from Simulator Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark",
   "selection_metric": "synthetic validation rotation error",
   "arms": {
     "frozen_no_aug_seed42": {
