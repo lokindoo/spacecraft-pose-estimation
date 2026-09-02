@@ -23,6 +23,17 @@ DOMAIN_COLOURS = {
     "sunlamp": "#FF7F0E",
 }
 
+# What each split is called in the paper. The pickles key these by their
+# internal split names ("in_domain_test"), which are fine in a results table and
+# wrong in a figure legend - the paper never uses that word, and an underscored
+# identifier reads as a leaked variable name.
+DOMAIN_LABELS = {
+    "synthetic": "in-domain (synthetic)",
+    "in_domain_test": "in-domain (synthetic)",
+    "lightbox": "lightbox",
+    "sunlamp": "sunlamp",
+}
+
 # What each conformal score is, in the terms the paper uses for it.
 METRIC_LABELS = {
     "rotation": "rotation (attitude cone)",
@@ -45,7 +56,9 @@ def rotation_error_by_arm(
     path: Path | None = None,
 ):
     """
-    Figure 1: rotation error per arm and domain, against the chance level.
+    Rotation error per arm and domain, against the chance level. Carried by
+    earlier drafts as Figure 1; the paper no longer includes it, since every
+    number in it is already in Table 1.
 
     The dashed line is the point of the figure. Read distances from it, not
     absolute heights - an error of 2.05 rad against a 2.207 chance level is a
@@ -83,7 +96,8 @@ def rotation_error_by_arm(
 
 def image_grid(images, rows: int, columns: int, path: Path | None = None, title: str = ""):
     """
-    A bare grid of image crops - Figure 2 is two of these side by side.
+    A bare grid of image crops. Earlier drafts built the augmentation figure
+    from two of these side by side; crops_with_histograms replaced it.
 
     No axes, no ticks: the comparison is between what the augmented synthetic
     distribution looks like and what the real domains look like, and axis
@@ -116,7 +130,7 @@ def reliability(
     font_scale: float = 1.0,
 ):
     """
-    Figure 3: nominal versus measured coverage. The diagonal is a perfectly
+    Figure 2: nominal versus measured coverage. The diagonal is a perfectly
     honest model; distance below it is how much the stated confidence overstates
     the real thing.
 
@@ -143,12 +157,27 @@ def reliability(
         for ax, metric in zip(np.atleast_1d(axes), metrics):
             ax.plot([nominal.min(), 1.0], [nominal.min(), 1.0], "k--", lw=1, label="perfect")
             for domain, values in curves[metric].items():
-                ax.plot(nominal, values, lw=2, label=domain, color=DOMAIN_COLOURS.get(domain))
+                ax.plot(
+                    nominal, values, lw=2,
+                    label=DOMAIN_LABELS.get(domain, domain),
+                    color=DOMAIN_COLOURS.get(domain),
+                )
             ax.set_xlabel("nominal coverage (calibrated on synthetic)")
             ax.set_title(METRIC_LABELS.get(metric, metric))
             ax.grid(alpha=0.3)
-        np.atleast_1d(axes)[0].set_ylabel("measured coverage")
-        np.atleast_1d(axes)[0].legend(loc="lower right")
+        first = np.atleast_1d(axes)[0]
+        first.set_ylabel("measured coverage")
+        if len(metrics) == 1:
+            # The single-panel version has no free corner: the diagonal fills the
+            # upper left, and both real-domain curves turn up hard against the
+            # right edge, which is exactly where "lower right" put the legend. It
+            # goes under the axes instead - same idiom as rotation_error_by_arm.
+            first.legend(
+                loc="upper center", bbox_to_anchor=(0.5, -0.16),
+                ncol=2, frameon=False,
+            )
+        else:
+            first.legend(loc="lower right")
         if show_title:
             figure.suptitle(f"Conformal reliability - {arm_name}")
         figure.tight_layout()
@@ -161,9 +190,10 @@ def crops_with_histograms(
     bins: int = 48,
     reference: str | None = None,
     log_counts: bool = True,
+    pools: dict[str, object] | None = None,
 ):
     """
-    Figure 2: a triptych of image crops, one column per distribution, with an
+    Figure 1: a triptych of image crops, one column per distribution, with an
     intensity-histogram strip underneath each column.
 
     ``columns`` maps a column heading ("augmented synthetic", "lightbox",
@@ -177,6 +207,17 @@ def crops_with_histograms(
     turns section 3.2's claim from an appeal to the eye into a measurement.
     ``reference`` names the column that gets overlaid, defaulting to the first.
 
+    ...but only if the histogram is measuring the DOMAIN rather than the three
+    pictures that happen to be on display. With ``pools`` omitted the densities
+    come from the crops in ``columns`` alone - three images - and which three you
+    drew visibly changes whether the columns separate at all. Pass ``pools`` (a
+    dict of the same keys mapping to any iterable of images, typically a few
+    hundred or the whole split) and the densities are accumulated over that
+    instead, so the crops illustrate and the strip measures. Pools are consumed
+    one image at a time and only the bin counts are kept, because the pixels of a
+    full domain do not fit in memory. A pool may also be a ``bins``-length array,
+    which is taken as an already-accumulated density and used as is.
+
     Counts are log-scaled by default: these frames are mostly empty space, so on
     a linear axis the black background is the only thing visible.
     """
@@ -185,6 +226,10 @@ def crops_with_histograms(
     rows = len(columns[labels[0]])
     if any(len(v) != rows for v in columns.values()):
         raise ValueError("every column needs the same number of crops")
+    if pools is not None:
+        missing = [label for label in labels if label not in pools]
+        if missing:
+            raise ValueError(f"no histogram pool for {missing}")
 
     figure = plt.figure(figsize=(2.6 * len(labels), 1.55 * rows + 1.7))
     grid = figure.add_gridspec(
@@ -194,8 +239,30 @@ def crops_with_histograms(
     )
 
     edges = np.linspace(0.0, 1.0, bins + 1)
-    densities = {label: _intensity_density(columns[label], edges) for label in labels}
+    source = pools if pools is not None else columns
 
+    def density(label):
+        pool = source[label]
+        # Accumulating over a whole split is the expensive part of this figure,
+        # so a caller that has already done it (to compare pool sizes, say) can
+        # hand back the density itself instead of the images again.
+        if isinstance(pool, np.ndarray) and pool.ndim == 1 and pool.size == bins:
+            return pool
+        return _intensity_density(pool, edges)
+
+    densities = {label: density(label) for label in labels}
+
+    # THE STRIP PANELS MUST SHARE ONE y-AXIS. Each panel draws its own column's
+    # density plus, for the two real columns, the reference on top; left to
+    # autoscale separately they end up on three different log scales with no tick
+    # labels to give the game away, so the *same* reference array renders at a
+    # different height and apparent shape in each panel and matches the augmented
+    # column's own fill in none of them. Every cross-panel comparison the figure
+    # exists to support - which is the whole of section 3.2 - is then an artifact
+    # of per-panel autoscaling rather than a fact about the distributions.
+    strip_axes = []
+
+    reference_line = None
     for column, label in enumerate(labels):
         for row in range(rows):
             ax = figure.add_subplot(grid[row, column])
@@ -206,15 +273,17 @@ def crops_with_histograms(
                 # and nothing the caption has to explain.
                 ax.set_title(label, fontsize=10, pad=4)
 
-        ax = figure.add_subplot(grid[rows, column])
+        ax = figure.add_subplot(
+            grid[rows, column], sharey=strip_axes[0] if strip_axes else None
+        )
+        strip_axes.append(ax)
         centres = 0.5 * (edges[:-1] + edges[1:])
         ax.fill_between(centres, densities[label], step="mid", alpha=0.65, color="#444444")
         if label != reference:
-            ax.step(
+            (reference_line,) = ax.step(
                 centres, densities[reference], where="mid",
                 color="#C0392B", lw=1.2, ls="--", label=reference,
             )
-            ax.legend(fontsize=7, frameon=False, loc="best")
         if log_counts:
             ax.set_yscale("log")
         ax.set_xlim(0, 1)
@@ -227,6 +296,16 @@ def crops_with_histograms(
         ax.set_xlabel("pixel intensity", fontsize=8)
         if column == 0:
             ax.set_ylabel("density (log)" if log_counts else "density", fontsize=8)
+
+    if reference_line is not None:
+        # One legend under the whole strip, not one inside every panel. "best"
+        # has nowhere to go in a panel this small - it landed on the curve it was
+        # labelling - and the entry was identical in each panel anyway.
+        figure.legend(
+            handles=[reference_line], labels=[reference],
+            loc="lower center", bbox_to_anchor=(0.5, -0.02),
+            frameon=False, fontsize=8,
+        )
 
     return _save(figure, path) if path else figure
 
@@ -242,8 +321,22 @@ def _as_image(image) -> np.ndarray:
     return image / 255.0 if image.max() > 1.5 else image
 
 
-def _intensity_density(images: list, edges: np.ndarray) -> np.ndarray:
-    """Pixel-intensity density pooled over one column's crops."""
-    pixels = np.concatenate([_as_image(image).ravel() for image in images])
-    counts, _ = np.histogram(pixels, bins=edges, density=True)
-    return counts
+def _intensity_density(images, edges: np.ndarray) -> np.ndarray:
+    """
+    Pixel-intensity density over any iterable of images.
+
+    Accumulates bin counts one image at a time rather than concatenating the
+    pixels: a three-crop column would fit either way, but a whole domain would
+    not (6,740 lightbox frames at 320x512 is ~9 GB of float64). Normalised the
+    way ``np.histogram(density=True)`` does - counts over total pixels times bin
+    width - so a pooled density and a three-crop one are on the same scale.
+    """
+    counts = np.zeros(len(edges) - 1, dtype=np.float64)
+    total = 0
+    for image in images:
+        pixels = _as_image(image).ravel()
+        counts += np.histogram(pixels, bins=edges)[0]
+        total += pixels.size
+    if total == 0:
+        raise ValueError("no images to build an intensity histogram from")
+    return counts / (total * np.diff(edges))
