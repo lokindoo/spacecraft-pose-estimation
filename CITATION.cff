@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: >-
-  Robust in the Wrong Direction: Augmentation and Uncertainty Under
-  Sim-to-Real Shift in Spacecraft Pose Estimation
+  Unreasonable Confidence from Simulator Misspecification: Directional
+  Robustness on the SPEED+ Sim-to-Real Benchmark
 message: >-
   If you use this code or the released checkpoints, please cite the
   paper. If you use the SPEED+ dataset, cite Park et al. as well (see
@@ -30,8 +30,8 @@ keywords:
 # preferred-citation:
 #   type: article
 #   title: >-
-#     Robust in the Wrong Direction: Augmentation and Uncertainty Under
-#     Sim-to-Real Shift in Spacecraft Pose Estimation
+#     Unreasonable Confidence from Simulator Misspecification: Directional
+#     Robustness on the SPEED+ Sim-to-Real Benchmark
 #   authors:
 #     - given-names: Nikolay
 #       family-names: Dolgov

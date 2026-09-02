@@ -20,7 +20,7 @@ ORDER MATTERS and is not arbitrary:
                                 normalisation (it writes zeros in normalised space)
 
 ``preview=True`` drops only Normalize, so the result is still displayable. That
-is exactly how the augmented crops in Figure 2 were produced.
+is exactly how the augmented crops in Figure 1 were produced.
 """
 
 from __future__ import annotations
@@ -43,8 +43,8 @@ def _uniform(low: float, high: float) -> float:
 
     Deliberately torch and not numpy: torch.manual_seed then controls
     augmentation along with weight init and shuffling. The published arms used
-    this; the notebook that rendered Figure 2 used numpy draws instead, which
-    changes which samples you see but not the distribution.
+    this; the notebook that rendered the augmented crops used numpy draws
+    instead, which changes which samples you see but not the distribution.
     """
     return torch.empty(1).uniform_(low, high).item()
 
@@ -150,7 +150,7 @@ def build_train_transform(
     With ``augmentation.enabled`` false this is identical to the eval transform -
     the no-augmentation arms of the 2x2 train on exactly what they are evaluated
     on. With ``preview`` true, Normalize is omitted so the tensor still renders
-    as an image (this is the Figure 2 path).
+    as an image (this is the Figure 1 path).
     """
     image = image or ImageConfig()
     if not augmentation.enabled:

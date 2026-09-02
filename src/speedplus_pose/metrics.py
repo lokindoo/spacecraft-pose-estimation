@@ -21,7 +21,7 @@ import numpy as np
 # A uniformly random orientation guess. The geodesic angle between two random
 # rotations has density (1 - cos(theta))/pi on [0, pi], giving a mean of
 # pi/2 + 2/pi. Rotation errors are read as distance BELOW this, not as raw
-# magnitudes: 1.63 and 2.07 rad look close, but as skill they are 0.57 and 0.13.
+# magnitudes: 1.67 and 2.07 rad look close, but as skill they are 0.54 and 0.14.
 CHANCE_LEVEL = np.pi / 2 + 2 / np.pi  # ~2.207 rad
 
 

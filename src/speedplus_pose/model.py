@@ -78,9 +78,10 @@ def set_train_mode(model: SpacecraftPoseEstimator, config: ModelConfig) -> None:
     go on using the ImageNet running statistics. An unfrozen arm additionally
     puts layer 4 in train mode, so that stage's BatchNorm statistics start
     tracking the training distribution - and when augmentation is on, that means
-    tracking the *augmented* distribution, which Figure 2 shows sits close to
-    lightbox and far from sunlamp. That is why augmentation moves lightbox and
-    leaves sunlamp inside seed noise.
+    tracking the *augmented* distribution, which Figure 1 shows fits neither
+    real domain well and lightbox less badly. That is why augmentation moves
+    lightbox and leaves sunlamp inside seed noise: it pushed training toward the
+    domain it was already least wrong about.
 
     Calling ``model.train()`` alone would silently convert every frozen arm into
     a partially-adapted one and erase the comparison.

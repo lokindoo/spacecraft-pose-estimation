@@ -163,9 +163,10 @@ reproducible baseline for direct pose regression.
   90% on synthetic data cover 9–15% of rotation errors on real domains.
   Confidence is *not* informative under the shift, and predictions arrive as
   confidently wrong as they do correct.
-- **Augmentation is directional.** The photometric stack models diffuse
-  (lightbox-like) illumination and does not help under sunlamp's harsh
-  directional light.
+- **Augmentation is directional.** The photometric stack is a poor model of
+  both real domains and a markedly less poor one of the diffuse, lightbox-like
+  case. It improves lightbox on every seed and does not move sunlamp's harsh
+  directional light beyond seed-to-seed variation.
 - **Trained on one target only** — the Tango spacecraft. Not a general-purpose
   spacecraft pose estimator.
 - **Fixed input geometry**: 320×512 grayscale, one camera's intrinsics.

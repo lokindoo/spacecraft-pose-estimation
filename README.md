@@ -72,9 +72,22 @@ cannot hand the network contradictory targets.
 
 **Reading rotation errors.** A uniformly random orientation guess scores
 π/2 + 2/π ≈ **2.207 rad**. Raw errors crowded against that ceiling understate
-gaps badly: 1.63 and 2.07 rad look close, but as *skill above chance* they are
-0.57 and 0.13 — meaningfully versus barely better than guessing. Both are
+gaps badly: 1.67 and 2.07 rad look close, but as *skill above chance* they are
+0.54 and 0.14 — meaningfully versus barely better than guessing. Both are
 reported.
+
+SPEED+ orientations are not uniform on SO(3), so the chance level is also checked
+against an achievable no-skill predictor: a single constant pose fitted on the
+28k training labels alone, never on a test domain.
+
+```bash
+python scripts/constant_baseline.py    # labels only — no images, no checkpoint, no GPU
+```
+
+It scores E_R 2.176 on synthetic validation and 2.203 / 2.199 on lightbox and
+sunlamp — within 0.03 rad of the uniform value, which is why 2.207 is used
+throughout. Translation is the uncomfortable half: that constant scores E_T
+**0.372** on sunlamp, and two of the three augmented seeds do not beat it.
 
 ## Headline result
 
@@ -99,7 +112,8 @@ python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
 ### 1. Transfer is asymmetric — the *source* of a gain predicts whether it crosses
 
 Scaling from 4k to 28k images and moving the head from ImageNet logits to pooled
-features improved synthetic rotation error by **0.58 rad** (1.63 → 1.05). It
+features improved synthetic rotation error by **0.61 rad** (1.67 → 1.05) — both
+scored on the same 2,000-image synthetic validation split used throughout. It
 improved sunlamp by **0.03 rad** (2.07 → 2.05). Lightbox absorbed about 40% of
 it.
 
@@ -123,10 +137,21 @@ variation, which is lightbox:
 - **Sunlamp**: the paired differences *change sign* (+0.116, −0.265, −0.047).
   Wider spread than the effect it would have to establish.
 
-![What the augmentation actually models](figures/crops.png)
+![What the augmentation actually models](figures/crops_triptych_poolall.png)
 
-<!-- TODO: copy train_transforms_2rows.png and real_2rows.png into figures/, or
-     regenerate with: python scripts/make_figures.py --crops -->
+Columns: augmented synthetic training samples, then real test samples from each
+domain. Underneath each is that column's pixel-intensity density (log counts),
+pooled over **every image in the split** — 28,000 / 6,740 / 2,791 — with the
+augmented density overlaid on both real columns as a dashed line. The augmented
+distribution is far from both and closer to lightbox: total variation **0.63**
+against **0.80**.
+
+Regenerate it with the exact command behind the published PNG:
+
+```bash
+python scripts/make_figures.py --crops-triptych --seed 7 --triptych-rows 3 \
+    --histogram-pool all --triptych-suffix _poolall
+```
 
 Three components work actively *against* sunlamp:
 
@@ -134,11 +159,15 @@ Three components work actively *against* sunlamp:
   the features that survive harsh light *are* sharp: specular edges, hard shadow
   boundaries.
 - **The glare blob** teaches it to ignore soft bright regions, whereas sunlamp's
-  bright regions are saturated surfaces that still carry pose information.
+  are often *clipped* surfaces that still carry pose information. Photometric
+  jitter brightens smoothly instead: the augmented images end up brighter overall
+  than either real domain, yet clip less often than sunlamp does.
 
 And layer 4's BatchNorm statistics track the augmented training distribution,
-which the figure shows sits close to lightbox. Domain randomization helps where
-it *brackets* the target domain. This one brackets lightbox only.
+which fits neither real domain well and lightbox less badly — augmentation pushed
+training toward the domain it was already least wrong about. Domain randomization
+helps where it *brackets* the target domain. This one brackets neither, and
+misses sunlamp by more.
 
 ### 3. The model does not know it is failing
 
@@ -208,7 +237,7 @@ export SPEEDPLUS_ARTIFACTS=/path/to/artifacts
 ```bash
 pip install -r requirements.txt
 pip install -e .
-pytest tests            # 42 tests, no data required
+pytest tests            # 47 tests, no data required
 ```
 
 ### 3. Build the subsets
@@ -248,7 +277,12 @@ Then evaluate, and run the conformal analysis:
 python scripts/evaluate.py --config unfrozen_aug --seed 42 --checkpoint <best.pt> \
     --domains synthetic lightbox sunlamp calibration in_domain_test
 python scripts/run_conformal.py --output results/conformal_coverage.csv
-python scripts/make_figures.py --all
+
+# the paper's two figures, at the settings they were published with
+python scripts/make_figures.py --crops-triptych --seed 7 --triptych-rows 3 \
+    --histogram-pool all --triptych-suffix _poolall
+python scripts/make_figures.py --reliability --arms unfrozen_no_aug_seed42 \
+    --reliability-metrics rotation --font-scale 1.0
 ```
 
 > **Retraining will not bit-reproduce the published checkpoints.** The original
@@ -274,11 +308,11 @@ src/speedplus_pose/
   coverage.py       calibrate → gate → measure
   train.py          training loop with resume
   evaluate.py       inference → prediction records
-  figures.py        the three figures
+  figures.py        the paper's figures, and the extras that did not make it
 scripts/            one job each; reproduce_table.py is the important one
 results/            the published numbers, as CSV, plus checkpoints.json
 notebooks/          three curated notebooks (see notebooks/README.md)
-tests/              42 tests; the conformal ones include coverage simulations
+tests/              47 tests; the conformal ones include coverage simulations
 ```
 
 Colab users: mount Drive, point `SPEEDPLUS_ARTIFACTS` at it so a disconnect
