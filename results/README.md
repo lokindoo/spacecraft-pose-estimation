@@ -89,6 +89,29 @@ Two fields are unfilled until release: `huggingface` (the uploaded path) and
 
 ## Provenance
 
-These were transcribed from `project_context/results_table.md`, which the
-original Colab notebooks produced. They are the published values; a reproduction
+These were transcribed from the results table the original Colab notebooks
+produced. They are the published values; a reproduction
 run regenerates them independently, and the comparison is what matters.
+
+## `revision/`
+
+The post-review experiments (App. D of the paper), pre-registered before any
+result was opened. Selection uses synthetic validation only, as above. The
+appendix tables are generated from these files.
+
+| File | What it holds |
+|---|---|
+| `arm_a_no_blur_noise.csv` | ablation arm A (full stack without blur and noise), seeds 42–44, same columns as a per-seed evaluation |
+| `arm_b_jitter_gamma_erasing.csv` | ablation arm B (jitter, gamma and random erasing only; config `unfrozen_aug_jitter_gamma`) |
+| `control_unfrozen_aug_seed42.csv` | the full stack, seed 42, retrained with this code on the ablation's hardware (Apple M5), to separate hardware and code from the arm |
+| `conformal_ablation.csv` | conformal coverage for the seven runs above, same columns as `conformal_coverage.csv` |
+| `frozen_heads.csv` | frozen-backbone heads retrained on cached features: seeds, the {4k, 28k} × {logits, pooled} cells, the learning-rate × epochs sweep, and the synthetic-BN head. `name` encodes BN regime, features, training size, lr, epochs and seed |
+| `head_sweep_selection.json` | the sweep candidates' synthetic-validation E_R at seed 42, and the winner |
+| `conformal_heads.csv` | conformal coverage for every head |
+| `adabn.csv` | test-time BatchNorm adaptation (layer 4 only) on the six layer-4 checkpoints: `unadapted` and `adapted` rows on the held-out half of each real domain, with coverage under the published q̂ |
+| `image_statistics.csv` | per-pool edge density, clipped fraction, mean gradient, and total variation of the intensity and gradient densities from each real domain |
+
+The ablation arms and the control ran with `scripts/run_seeds.py` on an Apple
+M5 GPU, whereas the published arms ran in Colab. The control lands within seed
+noise of the published seed 42, but its sunlamp shift (−0.142 rad) is as large
+as the ablation effects, which is why those are reported as unresolved.
