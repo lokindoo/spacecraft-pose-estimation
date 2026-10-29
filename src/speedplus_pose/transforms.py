@@ -21,6 +21,10 @@ The order is deliberate:
 
 ``preview=True`` drops only Normalize, leaving a displayable result. That is how
 the augmented crops in Figure 1 were produced.
+
+Each component has a ``use_*`` switch in AugmentationConfig for the ablation
+arms. Switching one off removes it and nothing else: the survivors keep their
+order and their parameters.
 """
 
 from __future__ import annotations
@@ -153,19 +157,30 @@ def build_train_transform(
         )
 
     a = augmentation
-    photometric = [
-        v2.ColorJitter(brightness=a.brightness, contrast=a.contrast),
-        GammaJitter(a.gamma),
-    ]
-    tensor_augmentations = [
-        v2.RandomApply([SunGlareBlob(a.glare_sigma, a.glare_amplitude)], p=a.stochastic_p),
-        v2.RandomApply(
-            [v2.GaussianBlur(kernel_size=a.blur_kernel, sigma=a.blur_sigma)],
-            p=a.stochastic_p,
-        ),
-        v2.RandomApply([AdditiveGaussianNoise(a.noise_sigma)], p=a.stochastic_p),
-    ]
-    erasing = [v2.RandomErasing(scale=a.erasing_scale)]
+    photometric = []
+    if a.use_jitter:
+        photometric.append(v2.ColorJitter(brightness=a.brightness, contrast=a.contrast))
+    if a.use_gamma:
+        photometric.append(GammaJitter(a.gamma))
+
+    tensor_augmentations = []
+    if a.use_glare:
+        tensor_augmentations.append(
+            v2.RandomApply([SunGlareBlob(a.glare_sigma, a.glare_amplitude)], p=a.stochastic_p)
+        )
+    if a.use_blur:
+        tensor_augmentations.append(
+            v2.RandomApply(
+                [v2.GaussianBlur(kernel_size=a.blur_kernel, sigma=a.blur_sigma)],
+                p=a.stochastic_p,
+            )
+        )
+    if a.use_noise:
+        tensor_augmentations.append(
+            v2.RandomApply([AdditiveGaussianNoise(a.noise_sigma)], p=a.stochastic_p)
+        )
+
+    erasing = [v2.RandomErasing(scale=a.erasing_scale)] if a.use_erasing else []
 
     return v2.Compose(
         _base(image)

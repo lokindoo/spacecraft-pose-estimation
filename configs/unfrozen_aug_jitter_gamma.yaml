@@ -1,0 +1,15 @@
+# Ablation arm B: brightness/contrast jitter and gamma, plus random erasing
+# (kept, so arm B minus arm A isolates the glare blob); no glare, blur or noise.
+# Layer 4 trainable, seeds 42, 43, 44; read as paired differences against
+# arm A (unfrozen_aug_no_blur_noise) and unfrozen_aug.
+extends: base.yaml
+name: unfrozen_aug_jitter_gamma
+seed: 42
+model:
+  trainable_stages: ["layer4"]
+augmentation:
+  enabled: true
+  use_glare: false
+  use_blur: false
+  use_noise: false
+  use_erasing: true

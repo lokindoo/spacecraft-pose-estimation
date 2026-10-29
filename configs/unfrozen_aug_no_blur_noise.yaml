@@ -1,0 +1,14 @@
+# Ablation arm A: the published stack minus blur and noise, the two components
+# the mechanism says work against sunlamp's sharp structure. Everything else,
+# glare and erasing included, is as in unfrozen_aug.
+# Layer 4 trainable, seeds 42, 43, 44; read as paired differences against
+# unfrozen_aug.
+extends: base.yaml
+name: unfrozen_aug_no_blur_noise
+seed: 42
+model:
+  trainable_stages: ["layer4"]
+augmentation:
+  enabled: true
+  use_blur: false
+  use_noise: false

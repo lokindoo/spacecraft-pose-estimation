@@ -72,13 +72,29 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--alpha", type=float, default=ALPHA, help="1 - nominal coverage")
     parser.add_argument("--output", default=None, help="Write the coverage table as CSV")
+    parser.add_argument(
+        "--arms",
+        nargs="+",
+        default=None,
+        help="Prediction-pickle stems to analyse instead of the manifest's arms, "
+        "e.g. the heads scripts/train_head.py wrote",
+    )
+    parser.add_argument(
+        "--predictions-dir",
+        default=None,
+        help="Where the pickles live (default: <artifacts>/predictions)",
+    )
     args = parser.parse_args(argv)
 
     paths = paths_from_args(args)
-    manifest = json.loads(Path(args.checkpoints).read_text(encoding="utf-8"))
-    arms = list(manifest["arms"])
+    if args.arms:
+        arms = list(args.arms)
+    else:
+        manifest = json.loads(Path(args.checkpoints).read_text(encoding="utf-8"))
+        arms = list(manifest["arms"])
+    predictions_dir = Path(args.predictions_dir) if args.predictions_dir else paths.predictions
 
-    scores = {arm: load_arm_scores(arm, paths.predictions) for arm in arms}
+    scores = {arm: load_arm_scores(arm, predictions_dir) for arm in arms}
     n_calibration = len(scores[arms[0]]["calibration"]["rotation"])
 
     results = {}

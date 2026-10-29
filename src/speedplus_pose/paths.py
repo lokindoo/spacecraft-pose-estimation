@@ -107,6 +107,20 @@ class Paths:
     def figures(self) -> Path:
         return self.artifacts / "figures"
 
+    def features(self, bn_regime: str) -> Path:
+        """Cached frozen-backbone features, one directory per BatchNorm regime."""
+        return self.artifacts / "features" / bn_regime
+
+    @property
+    def heads(self) -> Path:
+        """Heads trained on cached features: predictions and run summaries."""
+        return self.artifacts / "heads"
+
+    @property
+    def results(self) -> Path:
+        """Per-seed CSVs written by the revision runs, before they are frozen into results/."""
+        return self.artifacts / "results"
+
     @staticmethod
     def _check_domain(domain: str) -> None:
         if domain not in RAW_DOMAINS:

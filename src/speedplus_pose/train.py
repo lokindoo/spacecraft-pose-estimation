@@ -8,10 +8,17 @@ outlives the session, and a restart picks up the latest one.
 Which saved epoch becomes "the model" is a separate decision, taken later: the
 checkpoint with the best synthetic validation rotation error, applied uniformly
 to every arm, with no real-domain number involved.
+
+Every save is also logged to ``saved_checkpoints.json`` in the run directory,
+with its epoch and validation errors. That ledger is what makes pruning safe: a
+run can keep only the latest checkpoint (for resume) and the best one so far
+(for selection) without the selection rule changing, which matters when a
+checkpoint is a few hundred MB and the disk is a 15 GB Drive.
 """
 
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -82,8 +89,60 @@ def latest_checkpoint(directory: Path) -> Path | None:
     return checkpoints[-1] if checkpoints else None
 
 
-def _checkpoint_name() -> str:
-    return f"checkpoint_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.pt"
+def _checkpoint_name(epoch: int) -> str:
+    # The epoch suffix keeps two saves in the same second apart without
+    # breaking the lexical-equals-chronological ordering.
+    return f"checkpoint_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_e{epoch + 1:02d}.pt"
+
+
+LEDGER_NAME = "saved_checkpoints.json"
+
+
+def read_ledger(directory: Path) -> list[dict]:
+    """Every checkpoint this run has saved, pruned or not, in save order."""
+    path = Path(directory) / LEDGER_NAME
+    if not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _record_save(directory: Path, filename: str, epoch: int, history: TrainingHistory) -> list[dict]:
+    ledger = [entry for entry in read_ledger(directory) if entry["epoch"] != epoch]
+    ledger.append(
+        {
+            "file": filename,
+            "epoch": epoch,
+            "val_r": history.validation_rotation_errors[epoch],
+            "val_t": history.validation_translation_errors[epoch],
+            "pruned": False,
+        }
+    )
+    (directory / LEDGER_NAME).write_text(json.dumps(ledger, indent=2), encoding="utf-8")
+    return ledger
+
+
+def selected_checkpoint(directory: Path) -> dict | None:
+    """
+    The selection rule: among the checkpoints this run saved, the one with the
+    best synthetic validation rotation error. Odd epochs were never saved, so
+    they cannot be selected, exactly as in the published runs.
+    """
+    ledger = read_ledger(directory)
+    if not ledger:
+        return None
+    return min(ledger, key=lambda entry: (entry["val_r"], entry["epoch"]))
+
+
+def _prune(directory: Path) -> None:
+    """Delete every checkpoint except the latest and the currently selected one."""
+    ledger = read_ledger(directory)
+    keep = {ledger[-1]["file"], selected_checkpoint(directory)["file"]}
+    for entry in ledger:
+        if entry["file"] in keep or entry["pruned"]:
+            continue
+        (directory / entry["file"]).unlink(missing_ok=True)
+        entry["pruned"] = True
+    (directory / LEDGER_NAME).write_text(json.dumps(ledger, indent=2), encoding="utf-8")
 
 
 @torch.no_grad()
@@ -121,8 +180,12 @@ def train(
     checkpoint_dir: Path,
     device: torch.device,
     resume: bool = True,
+    prune: bool = False,
 ) -> TrainingHistory:
-    """Train one arm. Returns the full history."""
+    """
+    Train one arm. Returns the full history. With ``prune``, only the latest
+    and the best-so-far checkpoints stay on disk.
+    """
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     optimiser = torch.optim.Adam(model.parameters(), lr=config.train.learning_rate)
     history = TrainingHistory()
@@ -182,8 +245,9 @@ def train(
         )
 
         if (epoch + 1) % config.train.checkpoint_every == 0:
+            name = _checkpoint_name(epoch)
             save_checkpoint(
-                checkpoint_dir / _checkpoint_name(),
+                checkpoint_dir / name,
                 model,
                 optimiser,
                 epoch,
@@ -191,5 +255,8 @@ def train(
                 history,
                 config,
             )
+            _record_save(checkpoint_dir, name, epoch, history)
+            if prune:
+                _prune(checkpoint_dir)
 
     return history

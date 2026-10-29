@@ -106,6 +106,11 @@ def build_model(
 
 
 def resolve_device(preference: str | None = None) -> torch.device:
+    """CUDA, then Apple's MPS, then CPU. The revision runs used MPS on an M5."""
     if preference:
         return torch.device(preference)
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")

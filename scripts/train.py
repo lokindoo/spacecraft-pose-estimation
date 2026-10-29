@@ -29,7 +29,7 @@ from speedplus_pose.experiment import build_dataset, describe, load_split_labels
 from speedplus_pose.labels import translation_normalisation
 from speedplus_pose.model import build_model, resolve_device
 from speedplus_pose.normalisation import TranslationNormaliser
-from speedplus_pose.train import train
+from speedplus_pose.train import selected_checkpoint, train
 from speedplus_pose.transforms import build_eval_transform, build_train_transform
 
 
@@ -48,6 +48,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Tiny subset, 2 epochs, batch 4: a wiring check, not a run",
     )
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="Keep only the latest and the best-so-far checkpoints on disk",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help="Override the config's epoch count (for a short smoke run on real data)",
+    )
     args = parser.parse_args(argv)
 
     config = load_config(args.config, args.seed)
@@ -60,9 +71,12 @@ def main(argv: list[str] | None = None) -> int:
     train_labels = load_split_labels("train", paths)
     validation_labels = load_split_labels("synthetic", paths)
 
-    if args.smoke:
-        from dataclasses import replace
+    from dataclasses import replace
 
+    if args.epochs is not None:
+        config = replace(config, train=replace(config.train, epochs=args.epochs))
+
+    if args.smoke:
         config = replace(
             config,
             train=replace(config.train, epochs=2, batch_size=4, num_workers=0, checkpoint_every=2),
@@ -103,18 +117,17 @@ def main(argv: list[str] | None = None) -> int:
         checkpoint_dir=paths.checkpoints(config.run_name),
         device=device,
         resume=not args.no_resume,
+        prune=args.prune,
     )
 
-    best = history.best_epoch()
+    # Only saved epochs can be selected, so read the choice from the ledger
+    # rather than from the full history, whose best epoch may be an odd one.
+    selected = selected_checkpoint(paths.checkpoints(config.run_name))
     print(
-        f"\nBest synthetic val_r at epoch {best + 1}: "
-        f"{history.validation_rotation_errors[best]:.4f} rad "
-        f"(val_t {history.validation_translation_errors[best]:.4f})"
+        f"\nSelected checkpoint: epoch {selected['epoch'] + 1}, synthetic val_r "
+        f"{selected['val_r']:.4f} rad (val_t {selected['val_t']:.4f}) -> {selected['file']}"
     )
-    print(
-        "Checkpoint selection: pick the saved checkpoint with the best synthetic "
-        "val_r. No real-domain number may inform this choice."
-    )
+    print("No real-domain number informed this choice.")
     return 0
 
 

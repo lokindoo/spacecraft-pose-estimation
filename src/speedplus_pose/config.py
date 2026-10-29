@@ -63,6 +63,15 @@ class AugmentationConfig:
     noise_sigma: tuple[float, float] = (0.01, 0.08)
     stochastic_p: float = 0.5
     erasing_scale: tuple[float, float] = (0.02, 0.06)
+    # Per-component switches for the ablation arms. All on is the published
+    # stack; switching one off removes exactly that component and leaves the
+    # order of the rest unchanged.
+    use_jitter: bool = True  # brightness + contrast (ColorJitter)
+    use_gamma: bool = True
+    use_glare: bool = True
+    use_blur: bool = True
+    use_noise: bool = True
+    use_erasing: bool = True
 
 
 @dataclass(frozen=True)
