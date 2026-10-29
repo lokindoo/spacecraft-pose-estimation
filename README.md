@@ -6,6 +6,10 @@ A photometric augmentation stack is a guess at *how a simulator is wrong*. This
 is a study of what happens when the guess is wrong: robustness arrives only in
 the direction you augmented, and the model's confidence gives no warning.
 
+**Paper.** Nikolay Dolgov. *Unreasonable Confidence from Simulator
+Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark.*
+Sim2Science: ML with Imperfect Scientific Models, workshop at NeurIPS 2026.
+
 <!-- TODO before release: add badges once arXiv and HuggingFace are live.
      [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
      [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-checkpoints-yellow)](https://huggingface.co/TODO)
@@ -25,16 +29,13 @@ require having already solved the problem. The estimator is therefore trained on
 the output of a simulator and deployed against the physical system that
 simulator only approximates.
 
-That simulator is a physically-based renderer, and it is mechanistic in the same
-sense as a molecular-dynamics or a climate model: it numerically solves the
-rendering equation, an energy-balance integral equation for radiative transfer.
-Its approximations sit in the constitutive closure, the bidirectional
-reflectance distribution function, which is an analytic microfacet fit standing
-in for the true reflectance of multi-layer insulation and machined aluminium.
-
-The transport equation is right; the material model is where it is wrong. That
-is the same posture as an empirical force field in molecular dynamics, or a
-sub-grid parametrisation in a climate model.
+That simulator is not a physics engine. SPEED+'s synthetic images come from an
+OpenGL rasteriser, the Optical Stimulator camera emulator, whose shading is an
+empirical model of how sunlit foil and metal look, chosen for speed over
+fidelity. That shading model is a closure in the same sense as an empirical
+force field in molecular dynamics or a sub-grid parametrisation in a climate
+model: a cheap stand-in for physics the simulator never resolves, and the place
+its error lives.
 
 The resulting error is radiometric rather than geometric. Ranges and pose
 distributions are matched across the benchmark's domains. What differs is that
@@ -110,7 +111,7 @@ cannot hand the network contradictory targets.
 **Reading rotation errors.** A uniformly random orientation guess scores
 π/2 + 2/π ≈ 2.207 rad. Raw errors crowded against that ceiling understate gaps
 badly: 1.67 and 2.07 rad look close, but as *skill above chance* they are 0.54
-and 0.14, which is meaningfully better than guessing against barely better.
+and 0.13, which is meaningfully better than guessing against barely better.
 Both are reported.
 
 SPEED+ orientations are not uniform on SO(3), so the chance level is also checked
@@ -131,7 +132,9 @@ score. The refinement is not implemented in this script.) Translation is the unc
 ## Headline result
 
 E_T is range-normalised, E_R is in radians. Mean ± s.d. over seeds {42, 43, 44};
-frozen arms are single-seed (†).
+frozen arms are single-seed (†). Head-only retrains of the frozen arm on cached
+features put its seed s.d. at 0.017 / 0.026 / 0.031 rad (synthetic / lightbox /
+sunlamp); see [Revision experiments](#revision-experiments).
 
 | Backbone | Aug. | Synthetic E_T | Synthetic E_R | Lightbox E_T | Lightbox E_R | Sunlamp E_T | Sunlamp E_R |
 |---|---|---|---|---|---|---|---|
@@ -154,7 +157,8 @@ python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
 Scaling from 4k to 28k images and moving the head from ImageNet logits to pooled
 features improved synthetic rotation error by 0.61 rad (1.67 → 1.05), both
 scored on the same 2,000-image synthetic validation split used throughout. It
-improved sunlamp by 0.03 rad (2.07 → 2.05). Lightbox absorbed about 40% of it.
+moved sunlamp by 0.03 rad (2.07 → 2.05), less than the frozen head's seed s.d.
+there (0.031), so not detectably at all. Lightbox absorbed about 40% of it.
 
 Unfreezing layer 4 behaves quite differently: synthetic goes 1.05 → 0.32, and
 the real domains follow, sunlamp 2.05 → 1.53 and lightbox 1.75 → 1.17, which is
@@ -162,6 +166,14 @@ roughly 70–80% of the marginal synthetic gain carried across.
 
 Feeding a frozen ImageNet representation more data did not transfer. Adapting
 the representation did.
+
+Three pre-registered checks support this. Over three seeds, the four
+{4k, 28k} × {logits, pooled} cells split the synthetic gain roughly evenly
+between data (0.33 rad) and features (0.29 rad), and neither moves sunlamp
+beyond seed variation. Tuning the head's learning rate and epochs gains another
+0.10 rad on synthetic and nothing on the real domains. Re-estimating every
+BatchNorm layer on synthetic images, weights fixed, makes the frozen head worse
+on all three domains, so the layer-4 gain is not normalisation statistics alone.
 
 ### 2. Augmentation is directional: it helps in the direction it models
 
@@ -189,15 +201,27 @@ python scripts/make_figures.py --crops-triptych --seed 7 --triptych-rows 3 \
     --histogram-pool all --triptych-suffix _poolall
 ```
 
-Three components work actively against sunlamp:
+Photometric jitter brightens smoothly, so the augmented images end up brighter
+overall than either real domain, yet clip less often than sunlamp (2.0% of
+pixels against 2.8%).
 
-- **Blur and noise** teach the network to discard high-frequency detail, but the
-  features that survive harsh light *are* sharp: specular edges, hard shadow
-  boundaries.
-- **The glare blob** teaches it to ignore soft bright regions, whereas sunlamp's
-  are often clipped surfaces that still carry pose information. Photometric
-  jitter brightens smoothly instead, so the augmented images end up brighter
-  overall than either real domain yet clip less often than sunlamp does.
+We expected blur and noise, and the glare blob, to work against sunlamp's
+sharp, bright structure. A pre-registered ablation does not confirm it:
+
+- **Without blur and noise** (arm A), sunlamp E_R falls on two of three seeds
+  (−0.184, +0.006, −0.117 rad), while lightbox worsens on all three.
+- **Also without the glare blob** (arm B: jitter, gamma and erasing), lightbox
+  recovers but sunlamp does not improve further.
+- A control rerun of the full stack on the ablation's hardware moves seed 42's
+  sunlamp error by −0.142 rad, as much as the effects themselves. Neither
+  sunlamp effect is resolved at three seeds.
+
+Per-pixel gradients do not show sunlamp as sharper either: most of its frame is
+dark, so its edge density is the lowest of any split (2.0%, against 6.6% for
+lightbox and 10.7% for the augmented stack). What they do show is direction.
+Un-augmented synthetic images are closer to lightbox than to sunlamp (gradient
+total variation 0.07 against 0.26), and the stack, mostly through blur and
+noise, pushes them away from both (0.29 and 0.51).
 
 Layer 4's BatchNorm statistics then track the augmented training distribution,
 which fits neither real domain well and lightbox less badly, so augmentation
@@ -212,7 +236,7 @@ used for training or checkpoint selection, then held fixed:
 
 | | in-domain | lightbox | sunlamp |
 |---|---|---|---|
-| rotation coverage (no-aug, seeded arms) | 87.7–91.4% | 21–27% | 9–13% |
+| rotation coverage (no-aug, seeded arms) | 88.8–89.7% | 21–27% | 9–13% |
 | translation coverage | nominal | 33–35% | 14–18% |
 
 Restoring honest 90% rotation coverage on sunlamp would need the attitude cone
@@ -227,6 +251,11 @@ The guarantee is intact throughout. What broke is exchangeability. A navigation
 filter fed these poses receives wrong inputs that look exactly as confident as
 correct ones.
 
+Test-time adaptation does not rescue it. Re-estimating layer 4's BatchNorm
+statistics on unlabelled real images (AdaBN) lowers rotation error on every
+layer-4 checkpoint, on average by 0.09 rad on lightbox and 0.16 on sunlamp, yet
+rotation coverage reaches only 24–40% on lightbox and 11–20% on sunlamp.
+
 That is what the three findings amount to together. For any field where
 synthetic data is a necessity, the question to ask of a robustness intervention
 is not "how much does it help?" but "which way does it push the training
@@ -236,12 +265,16 @@ in a confident interval.
 
 ## Limitations
 
-- Frozen arms are n=1. Sunlamp is the smaller test set (2,791 images), so its
-  estimates are noisier.
+- The frozen arms were trained end to end on one seed (their seed spread comes
+  from head-only retrains), and the ablation arms ran on different hardware
+  (an Apple M5) from the published ones (Colab). Sunlamp is the smaller test set
+  (2,791 images): three seeds do not resolve sunlamp effects of 0.1 rad.
+- One estimator, one benchmark, images downscaled to 320×512. With real-domain
+  errors near 1 rad, this is a diagnostic baseline, not a deployable navigator.
 - The directionality claim is about *this* augmentation stack against *these*
   two domains, not about photometric augmentation in general.
 - Direct regression leans on coarse global shape, so its relative degradation
-  (3.8–5.2×) is much smaller than the ~40× reported for keypoint+PnP pipelines.
+  (3.8–5.2× for the layer-4 no-augmentation arm) is much smaller than the ~40× reported for keypoint+PnP pipelines.
   That is not evidence of a small gap; it is a different method class with a
   different failure mode.
 - Conformal coverage here is *marginal*. Fixed metre-radius spheres under-cover
@@ -255,7 +288,6 @@ The mechanism suggests its own tests:
 
 - Augmentation that models sunlamp's actual structure — specular highlights,
   hard cast shadows, saturation clipping — rather than soft photometric drift.
-- BatchNorm adaptation on unlabelled real batches.
 - Full backbone fine-tuning.
 - Weighted conformal prediction is the principled correction under covariate
   shift, but it needs density ratios between domains that barely overlap, which
@@ -280,7 +312,7 @@ export SPEEDPLUS_ARTIFACTS=/path/to/artifacts
 ```bash
 pip install -r requirements.txt
 pip install -e .
-pytest tests            # 47 tests, no data required
+pytest tests            # 74 tests, no data required
 ```
 
 ### 3. Build the subsets
@@ -301,9 +333,8 @@ python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
 It re-runs inference for all eight arms, rebuilds Table 1, and diffs it against
 `results/results_2x2.csv` row by row, exiting non-zero on any disagreement.
 
-> **The weights are not published yet.** Uploading weights derived from SPEED+
-> is gated on its licence terms; see [model_card.md](model_card.md). Until that
-> is resolved, this path needs checkpoints you trained yourself, and
+> **The weights are not uploaded yet**; see [model_card.md](model_card.md).
+> Until they are, this path needs checkpoints you trained yourself, and
 > `results/checkpoints.json` records which run each published row came from.
 > Everything else reproduces from this repository alone: the results CSVs, the
 > conformal analysis, the constant-pose baseline, and both paper figures.
@@ -344,10 +375,39 @@ python scripts/make_figures.py --reliability --arms unfrozen_no_aug_seed42 \
 
 Add `--smoke` to `train.py` for a two-minute CPU wiring check on 32 images.
 
+## Revision experiments
+
+Added after review, with predictions and decision rules committed before any
+result was opened. Their numbers are in [`results/revision/`](results/revision/)
+and App. D of the paper; selection uses synthetic validation only throughout.
+
+```bash
+# Augmentation ablation: arm A (no blur/noise), arm B (jitter, gamma, erasing),
+# and a control rerun of the full stack. Trains, selects and evaluates each seed.
+python scripts/run_seeds.py --config unfrozen_aug_no_blur_noise --seeds 42 43 44
+python scripts/run_seeds.py --config unfrozen_aug_jitter_gamma --seeds 42 43 44
+python scripts/run_seeds.py --config unfrozen_aug --seeds 42
+
+# Frozen-backbone block on cached features (CPU, minutes per head)
+python scripts/cache_features.py --bn imagenet
+python scripts/cache_features.py --bn synthetic        # BatchNorm re-estimated on synthetic
+python scripts/check_cache.py --checkpoint <frozen_no_aug.pt>   # published head reproduces
+python scripts/train_head.py --seeds 42 43 44                                  # seed spread
+python scripts/train_head.py --features logits --train-subset 4000 --seeds 42 43 44  # and the other cells
+python scripts/train_head.py --lr 3e-4 --epochs 60 --seeds 42 43 44            # tuned head
+python scripts/train_head.py --bn synthetic --seeds 42 43 44                   # synthetic-BN head
+
+# Test-time BatchNorm adaptation on the layer-4 checkpoints
+python scripts/adabn.py --checkpoint-dir <checkpoint-dir>   # --scope trained (layer 4 only)
+
+# Spatial image statistics behind the revised mechanism paragraph
+python scripts/image_statistics.py
+```
+
 ## Repository layout
 
 ```
-configs/            the four arms; seeds come from --seed
+configs/            the four arms and the two ablation arms; seeds come from --seed
 src/speedplus_pose/
   labels.py         label loading + quaternion canonicalisation
   transforms.py     the augmentation stack (and what it actually models)
@@ -359,10 +419,15 @@ src/speedplus_pose/
   train.py          training loop with resume
   evaluate.py       inference → prediction records
   figures.py        the paper's figures, and the extras that did not make it
+  batchnorm.py      BatchNorm re-estimation (synthetic-BN head, AdaBN)
+  features.py       cached backbone features for the frozen arms
+  heads.py          pose heads trained on cached features
+  image_stats.py    gradient, edge and clipping statistics
 scripts/            one job each; reproduce_table.py is the important one
-results/            the published numbers, as CSV, plus checkpoints.json
+results/            the published numbers, as CSV, plus checkpoints.json;
+                    results/revision/ holds the post-review experiments
 notebooks/          three curated notebooks (see notebooks/README.md)
-tests/              47 tests; the conformal ones include coverage simulations
+tests/              74 tests; the conformal ones include coverage simulations
 ```
 
 Colab users: mount Drive, point `SPEEDPLUS_ARTIFACTS` at it so a disconnect

@@ -15,8 +15,8 @@ authors:
     # orcid: "https://orcid.org/0000-0000-0000-0000"
 repository-code: "https://github.com/lokindoo/spacecraft-pose-estimation"
 license: Apache-2.0
-version: 1.0.0
-date-released: "2026-09-01"
+version: 1.1.0
+date-released: "2026-10-29"
 keywords:
   - spacecraft pose estimation
   - 6D pose estimation
