@@ -92,11 +92,13 @@ distance below that rather than as absolute magnitudes.
 | Backbone | Aug. | Synth E_T | Synth E_R | Lightbox E_T | Lightbox E_R | Sunlamp E_T | Sunlamp E_R |
 |---|---|---|---|---|---|---|---|
 | frozen | — | 0.066 | 1.053 | 0.151 | 1.752 | 0.253 | 2.048 |
-| frozen | ✓ | 0.071 | 1.180 | 0.118 | 1.718 | 0.306 | 1.864 |
+| frozen | ✓ | 0.073±0.002 | 1.185±0.019 | 0.121±0.005 | 1.708±0.031 | 0.304±0.024 | 1.876±0.010 |
 | layer 4 | — | 0.036±0.002 | 0.317±0.010 | 0.169±0.027 | 1.166±0.018 | 0.311±0.036 | 1.534±0.075 |
 | layer 4 | ✓ | 0.042±0.002 | 0.322±0.027 | 0.150±0.017 | **0.987±0.010** | 0.355±0.081 | 1.468±0.119 |
 
-Frozen arms are single-seed; layer 4 arms are mean ± s.d. over seeds 42/43/44.
+The frozen un-augmented arm is single-seed; the other arms are mean ± s.d. over
+seeds 42/43/44. Frozen augmented seeds 43 and 44 were trained on an Apple M5,
+the rest on Colab.
 
 ## Inference
 
