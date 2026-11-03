@@ -1,0 +1,170 @@
+\section{Revision experiments}
+\label{app:revision}
+
+All runs in this appendix were added after review and pre-registered: predictions and
+decision rules were written down and committed before any result was opened. Selection
+uses synthetic validation only, as in the body.
+
+\paragraph{Frozen-backbone block.} Because the frozen backbone runs in inference mode
+without augmentation, its pooled features (and the ImageNet logits computed from them)
+can be cached once and heads retrained on them in minutes. Applying the published
+seed-42 head to the cache reproduces its published errors to within $0.0005$.
+Table~\ref{tab:frozen} gives three seeds (42, 43, 44) for each configuration, all with
+the published head, loss and selection rule. The 4{,}000-image cells use one fixed
+draw from the 28{,}000 (not the original 4{,}000-image set). The tuned head is the best
+of learning rate $\{3{\times}10^{-4}, 10^{-3}, 3{\times}10^{-3}\}\times\{20, 60\}$
+epochs on seed 42, chosen on synthetic validation. The synthetic-BN head re-estimates
+every BatchNorm layer on the un-augmented synthetic training images (weights
+untouched) before caching.
+
+\begin{table}[ht]
+  \caption{Frozen-backbone heads retrained on cached features: $\Erot$ (rad), mean
+  $\pm$ s.d.\ over three seeds.}
+  \label{tab:frozen}
+  \centering
+  \small
+  \begin{tabular}{l ccc}
+    \toprule
+    Configuration & Synthetic (val) & Lightbox & Sunlamp \\
+    \midrule
+    4k images, 1000-d logits & $1.651{\pm}0.024$ & $1.962{\pm}0.012$ & $2.040{\pm}0.051$ \\
+    4k images, 2048-d pooled & $1.395{\pm}0.008$ & $1.872{\pm}0.016$ & $2.062{\pm}0.033$ \\
+    28k images, 1000-d logits & $1.353{\pm}0.026$ & $1.878{\pm}0.015$ & $2.016{\pm}0.027$ \\
+    28k images, 2048-d pooled (published config.) & $1.030{\pm}0.017$ & $1.761{\pm}0.026$ & $1.986{\pm}0.031$ \\
+    28k, pooled, tuned (lr $3{\times}10^{-4}$, 60 ep.) & $0.929{\pm}0.014$ & $1.751{\pm}0.035$ & $2.001{\pm}0.025$ \\
+    28k, pooled, synthetic-BN backbone & $1.394{\pm}0.002$ & $2.064{\pm}0.040$ & $2.107{\pm}0.010$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Frozen backbone with augmentation.} Augmented inputs cannot use the feature
+cache, so seeds 43 and 44 of the frozen augmented arm were trained end to end with the
+released code on an Apple M5 GPU; seed 42 is the published Colab run.
+Table~\ref{tab:frozenaug} pairs each seed with the head-only retrain of the same seed in
+the published configuration (Table~\ref{tab:frozen}). Their conformal coverage is in
+App.~\ref{app:conformal}.
+
+\begin{table}[ht]
+  \setlength{\tabcolsep}{3pt}
+  \caption{Frozen backbone with augmentation, $\Erot$ (rad) per seed and paired difference
+  from the head-only retrain without augmentation (same seed).}
+  \label{tab:frozenaug}
+  \centering
+  \small
+  \begin{tabular}{c ccc ccc}
+    \toprule
+    & \multicolumn{3}{c}{$\Erot$} & \multicolumn{3}{c}{$\Delta\Erot$ vs.\ no augmentation} \\
+    \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+    Seed & Synth. & Lightbox & Sunlamp & Synth. & Lightbox & Sunlamp \\
+    \midrule
+    42 & 1.180 & 1.718 & 1.864 & $+0.169$ & $-0.029$ & $-0.128$ \\
+    43 & 1.205 & 1.734 & 1.883 & $+0.161$ & $-0.012$ & $-0.069$ \\
+    44 & 1.169 & 1.673 & 1.881 & $+0.134$ & $-0.117$ & $-0.132$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Augmentation ablation.} Arm A is the full stack without blur and noise;
+arm B keeps only brightness/contrast jitter, gamma and random erasing (no glare blob,
+blur or noise). Both train layer 4 on seeds 42, 43 and 44 with the published
+configuration, and are read as per-seed differences. They were trained with the
+released code on an Apple M5 GPU, whereas the published arms were trained on Colab.
+A control rerun of the full stack (seed 42) on the M5 differs from its published
+counterpart by -0.053, +0.006 and -0.142\,rad in $\Erot$
+(synthetic, lightbox, sunlamp): within seed variation, but on sunlamp as large as the
+ablation effects themselves.
+
+\begin{table}[ht]
+  \setlength{\tabcolsep}{3pt}
+  \caption{Augmentation ablation, $\Erot$ (rad) per seed and paired difference from
+  the published full stack (layer 4, same seed). Last column: sunlamp $\Etrans$.}
+  \label{tab:ablation}
+  \centering
+  \small
+  \begin{tabular}{l c ccc ccc c}
+    \toprule
+    & & \multicolumn{3}{c}{$\Erot$} & \multicolumn{3}{c}{$\Delta\Erot$ vs.\ full stack} & Sunlamp \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Arm & Seed & Synth. & Lightbox & Sunlamp & Synth. & Lightbox & Sunlamp & $\Etrans$ \\
+    \midrule
+    full stack & 42 & 0.352 & 0.986 & 1.592 & -- & -- & -- & 0.405 \\
+     & 43 & 0.302 & 0.997 & 1.354 & -- & -- & -- & 0.399 \\
+     & 44 & 0.311 & 0.977 & 1.459 & -- & -- & -- & 0.261 \\
+    \midrule
+    A: no blur/noise & 42 & 0.320 & 1.070 & 1.408 & $-0.032$ & $+0.084$ & $-0.184$ & 0.311 \\
+     & 43 & 0.328 & 1.001 & 1.360 & $+0.026$ & $+0.004$ & $+0.006$ & 0.325 \\
+     & 44 & 0.320 & 1.081 & 1.342 & $+0.009$ & $+0.104$ & $-0.117$ & 0.280 \\
+    \midrule
+    B: jitter, gamma, erasing & 42 & 0.297 & 0.983 & 1.390 & $-0.055$ & $-0.003$ & $-0.202$ & 0.286 \\
+     & 43 & 0.310 & 0.947 & 1.437 & $+0.008$ & $-0.050$ & $+0.083$ & 0.309 \\
+     & 44 & 0.291 & 1.068 & 1.414 & $-0.020$ & $+0.091$ & $-0.045$ & 0.330 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Test-time BatchNorm adaptation (AdaBN).} For each layer-4 checkpoint we
+re-estimate only layer 4's BatchNorm statistics, the ones fitted on synthetic data, from
+the unlabelled images of one half of each real domain (a fixed random split by
+filename), leave every weight untouched, and evaluate on the other half (3{,}370 lightbox, 1{,}396 sunlamp
+images). Coverage uses each arm's published synthetic-calibrated $\hat{q}$. This is
+test-time adaptation: it uses target images, though not their labels. The frozen arms
+are excluded, as all their statistics are ImageNet's.
+
+\begin{table}[ht]
+  \caption{AdaBN on the held-out half of each real domain: unadapted $\to$ adapted.
+  Coverage is of the 90\% synthetic-calibrated rotation cone.}
+  \label{tab:adabn}
+  \centering
+  \small
+  \begin{tabular}{l c l ccc}
+    \toprule
+    Aug. & Seed & Domain & $\Erot$ & $\Etrans$ & Rotation coverage (\%) \\
+    \midrule
+    -- & 42 & lightbox & 1.171 $\to$ 1.074 & 0.202 $\to$ 0.149 & 21.1 $\to$ 23.9 \\
+     &  & sunlamp & 1.519 $\to$ 1.393 & 0.298 $\to$ 0.196 & 8.5 $\to$ 11.2 \\
+     & 43 & lightbox & 1.199 $\to$ 1.110 & 0.153 $\to$ 0.130 & 26.0 $\to$ 28.0 \\
+     &  & sunlamp & 1.644 $\to$ 1.422 & 0.351 $\to$ 0.199 & 8.8 $\to$ 14.5 \\
+     & 44 & lightbox & 1.160 $\to$ 1.057 & 0.156 $\to$ 0.132 & 25.6 $\to$ 29.3 \\
+     &  & sunlamp & 1.540 $\to$ 1.393 & 0.283 $\to$ 0.181 & 11.7 $\to$ 11.6 \\
+    \midrule
+    \checkmark & 42 & lightbox & 1.012 $\to$ 0.933 & 0.153 $\to$ 0.136 & 36.4 $\to$ 40.4 \\
+     &  & sunlamp & 1.594 $\to$ 1.400 & 0.406 $\to$ 0.210 & 12.3 $\to$ 18.6 \\
+     & 43 & lightbox & 1.013 $\to$ 0.908 & 0.165 $\to$ 0.170 & 32.2 $\to$ 35.5 \\
+     &  & sunlamp & 1.348 $\to$ 1.239 & 0.397 $\to$ 0.210 & 14.8 $\to$ 19.1 \\
+     & 44 & lightbox & 0.978 $\to$ 0.914 & 0.133 $\to$ 0.129 & 37.5 $\to$ 40.0 \\
+     &  & sunlamp & 1.483 $\to$ 1.342 & 0.262 $\to$ 0.192 & 14.6 $\to$ 19.6 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Image statistics.} Figure~\ref{fig:crops} compares pooled intensity
+densities, which cannot separate a soft bright blob from a hard edge.
+Table~\ref{tab:imagestats} adds spatial statistics, pooled over every image of each
+split after the same resize and grayscale conversion (augmentation seed 7, as in
+Figure~\ref{fig:crops}): the Sobel gradient magnitude, scaled so a full black-to-white
+step reads 1; edge density, the share of pixels whose gradient exceeds 0.1; the
+clipped fraction, the share of pixels at or above $254/255$; and the total variation
+(TV) between pooled densities (48 intensity bins, 64 gradient bins). The intensity TV of
+the full stack reproduces Figure~\ref{fig:crops} ($0.63$, $0.80$).
+
+\begin{table}[ht]
+  \caption{Pooled image statistics and total-variation distance to each real domain.}
+  \label{tab:imagestats}
+  \centering
+  \small
+  \begin{tabular}{l cc cc cc}
+    \toprule
+    & Edge & Clipped & \multicolumn{2}{c}{TV intensity} & \multicolumn{2}{c}{TV gradient} \\
+    \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+    Pool & density (\%) & (\%) & lightbox & sunlamp & lightbox & sunlamp \\
+    \midrule
+    lightbox & 6.6 & 0.08 & 0.00 & 0.28 & 0.00 & 0.22 \\
+    sunlamp & 2.0 & 2.78 & 0.28 & 0.00 & 0.22 & 0.00 \\
+    synthetic, no aug. & 10.9 & 0.07 & 0.68 & 0.83 & 0.07 & 0.26 \\
+    synthetic, full stack & 10.7 & 1.96 & 0.63 & 0.80 & 0.29 & 0.51 \\
+    synthetic, arm A & 9.6 & 2.62 & 0.65 & 0.81 & 0.10 & 0.33 \\
+    synthetic, arm B & 9.7 & 1.67 & 0.66 & 0.82 & 0.09 & 0.31 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+

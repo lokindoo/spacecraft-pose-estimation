@@ -1,0 +1,436 @@
+% =========================================================================
+% Sim2Science: ML with Imperfect Scientific Models @ NeurIPS 2026
+% 5-page workshop paper (excluding references). Deadline 2 Sep 2026, AoE.
+%
+% Venue policy, verified against https://www.sim2science.com/cfp.html:
+%   * Template is mandatory and its absence is a stated desk-reject:
+%     neurips_2026.sty with \usepackage[dblblindworkshop]{neurips_2026}
+%     and \workshoptitle{Sim2Science} — exactly as spelled below.
+%   * 5 pages excluding references. The appendix has no page limit, but
+%     reviewers are not obliged to read it, so the main body must stand
+%     on its own.
+%   * Double-blind: FULLY anonymised (text, figures, links). The
+%     [dblblindworkshop] option keeps the author block anonymous
+%     automatically; the anonymous code mirror in Sec. 2 is the other half.
+%   * The reproducibility checklist is required, and must sit AFTER the
+%     references and BEFORE the appendix (see \input{checklist} at the
+%     end of this file). Missing or incomplete → desk rejection.
+%   * Non-archival, and work under review elsewhere is welcome.
+%   * For a de-anonymised preprint build, replace the option with
+%     [preprint] — the \author block below then becomes visible, and the
+%     "Code and data" paragraph in Sec. 2 must point at the public repo.
+% =========================================================================
+\documentclass{article}
+
+\PassOptionsToPackage{numbers,compress}{natbib}
+\usepackage[dblblindworkshop, final]{neurips_2026}
+\workshoptitle{Sim2Science: ML with Imperfect Scientific Models}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\hypersetup{pdftitle={Unreasonable Confidence from Simulator Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark}, pdfauthor={Nikolay Dolgov}}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+
+% modest float-spacing squeeze (common in NeurIPS 4-pagers)
+\setlength{\textfloatsep}{9pt plus 2pt minus 3pt}
+\setlength{\abovecaptionskip}{6pt}
+
+% matplotlib default colours, matching the reliability plot (Fig. 3)
+\definecolor{mplblue}{HTML}{1F77B4}
+\definecolor{mplorange}{HTML}{FF7F0E}
+\definecolor{mplgreen}{HTML}{2CA02C}
+
+\newcommand{\Erot}{E_{R}}
+\newcommand{\Etrans}{E_{T}}
+
+% \title{Augmentation Buys Robustness Only in the Direction You Augment: A Sim-to-Real Study in Spacecraft Pose Estimation}
+% \title{Robust in the Wrong Direction: Augmentation and Uncertainty Under Sim-to-Real Shift in Spacecraft Pose Estimation}
+\title{Unreasonable Confidence from Simulator Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark}
+
+% Camera-ready: the [final] option de-anonymises the author block.
+\author{%
+  Nikolay Dolgov\\
+  Independent Researcher\\
+  \texttt{niko.dolgow@gmail.com}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Vision-based navigation systems for orbit must be trained almost entirely on synthetic
+imagery, because real labelled images of a given spacecraft in flight rarely exist.
+Benchmarks like SPEED+ are built for exactly that situation: the test sets are real
+images of a satellite mockup under two lighting conditions, but the training set comes
+from a simulator. That simulator approximates how light reflects off mylar and
+aluminium, and like every scientific simulator it is misspecified. The error is
+radiometric: it does not reproduce the specular highlights, hard shadows, and sensor
+saturation that are ordinary in real images. The resulting synthetic-to-real gap is the
+central risk for such systems. We probe it with a deliberately simple monocular pose
+estimator---a $2{\times}2$ study of backbone adaptation and photometric augmentation,
+trained on synthetic images and tested on both real hardware-in-the-loop domains. We
+report three findings. (1)~The model does not know it is failing. Regions conformally
+calibrated to 90\% on synthetic data cover 9--15\% of rotation errors on sunlamp and
+21--38\% on lightbox, so a wrong pose carries the confidence of a correct one.
+(2)~Transfer is asymmetric. Scaling data and features improved synthetic rotation error
+from 1.67 to 1.05\,rad but did not detectably move the harshly lit \emph{sunlamp}
+domain (0.03\,rad, within seed variation), whereas adapting the backbone's last stage carried 70--80\% of its marginal
+synthetic gain across to both real domains. (3)~Once the backbone adapts, augmentation
+only helps in the direction it models. Our photometric stack improved the diffusely lit
+\emph{lightbox} domain from 1.17 to 0.99\,rad on every seed, yet moved sunlamp no
+further than seed-to-seed variation; with the backbone frozen, it helped sunlamp more.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Machine learning models for spacecraft navigation are trained almost entirely on the output of a
+simulator and deployed against a physical system that simulator only approximates.
+Real images of a target spacecraft in orbit, labelled with its pose, essentially do not
+exist, so estimators learn from rendered images and are then tested
+for the first time during the mission. The SPEED+ benchmark~\citep{park2022speedplus}
+was built to make that discrepancy measurable. It pairs ${\sim}60{,}000$ labelled
+synthetic training images of the Tango spacecraft with ${\sim}9{,}500$ real images of a
+physical mockup, lit two ways: \emph{lightbox}, diffuse and Earth-albedo-like, and
+\emph{sunlamp}, a collimated solar simulator giving harsh directional light. On its
+predecessor SPEED, whose real test images show the same mockup, the 2019 challenge's top
+ten entries degraded $2.7$--$40\times$ in pose score from synthetic to real (winner
+$40\times$, runner-up $5.3\times$, median $8.5\times$)~\citep{kisantal2020speed}.
+
+The simulator is not a physics engine. SPEED+'s synthetic images come from an OpenGL
+rasteriser---the Optical Stimulator camera emulator---whose shading is an empirical
+model of how sunlit foil and metal look, chosen for speed over
+fidelity~\citep{park2022speedplus}. That shading model is a closure in the same sense as
+an empirical force field in molecular dynamics or a sub-grid parametrisation in a
+climate model: a cheap stand-in for physics the simulator never resolves, and the place
+its error lives. The error is radiometric, not geometric. Ranges and pose distributions
+match across domains; what differs is appearance. Mylar and machined metal reflect
+specularly, and a collimated source turns those reflections into hard shadow boundaries
+and saturated pixels. Saturation is not even a shading error---it happens in the
+detector, so the observation operator is misspecified as well as the scene. A
+photometric augmentation stack is therefore a \emph{discrepancy model}: an unvalidated
+guess at the simulator-to-reality residual, applied not as a correction to the forward
+model but as a distribution the training data is smeared over. This paper is about
+what happens when that guess is wrong---not only a loss of accuracy, but the silent loss
+of calibration.
+
+We use SPEED+ as a controlled testbed and ask \emph{what actually transfers from
+simulation to reality}. The estimator is a direct-regression baseline: an
+ImageNet-pretrained ResNet-50 with a small head. We train it on the synthetic split
+alone, in a $2{\times}2$ design of \{frozen backbone, last stage unfrozen\} $\times$ \{no
+augmentation, photometric augmentation\}, and evaluate on the full \emph{lightbox} and
+\emph{sunlamp} test sets. Three of the four arms are run on three seeds, and checkpoints are
+selected on synthetic validation only. Our contributions:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+  \item \textbf{The model does not know it is failing.} Split-conformal regions
+  calibrated to 90\% on held-out synthetic data keep that coverage in-domain, but cover
+  only 9--15\% of rotation errors on sunlamp, and test-time BatchNorm adaptation
+  lifts that only to 11--20\%. On the weakest arms the attitude cone
+  spans roughly half of all orientations: still valid, no longer meaningful.
+  \item \textbf{Transfer is asymmetric.} Scaling data and features under a frozen
+  backbone bought large synthetic gains that barely crossed to harsh illumination:
+  0.61\,rad of synthetic improvement left sunlamp within seed variation, whichever
+  factor was scaled. Gains from adapting
+  the representation crossed substantially.
+  \item \textbf{Augmentation is directional.} Our photometric stack was built in
+  good faith to anticipate harsh real illumination, but it models neither real
+  domain well, and the \emph{diffuse} lightbox markedly less badly:
+  adapting layer 4, it improved lightbox by ${\sim}0.18$\,rad on every seed, while sunlamp moved no
+  further than seed-to-seed variation; with the backbone frozen, the order reverses. Ablating its components does not resolve
+  sunlamp either (Fig.~\ref{fig:crops}).
+\end{itemize}
+
+\section{Setup}
+\label{sec:setup}
+
+\paragraph{Data.} From the SPEED+ synthetic training split we sample 28{,}000 training
+and 2{,}000 validation images, downscaled to $320{\times}512$ grayscale to fit the GPU
+available. Both real domains are used in full as test sets: lightbox (6{,}740 images) and
+sunlamp (2{,}791). No real image influences training, tuning, or model selection. Range
+distributions match across domains, so any extra difficulty on the real domains comes
+from appearance rather than from harder poses.
+
+\paragraph{Model and loss.} A ResNet-50~\citep{he2016resnet} pretrained on
+ImageNet~\citep{deng2009imagenet} feeds global-average-pooled 2048-d features
+to a two-layer MLP head that regresses translation $\mathbf{t}$ (targets
+z-scored per component) and a unit quaternion $\mathbf{q}$---direct pose
+regression~\citep{kendall2015posenet,sharma2020spn,proenca2020urso}.
+The loss splits the two: $\mathcal{L} = \mathrm{MSE}(\hat{\mathbf{t}},
+\mathbf{t}) + \lambda\,(1 - \langle\hat{\mathbf{q}},\mathbf{q}\rangle^{2})$
+with $\lambda{=}1$ and $\hat{\mathbf{q}}$ $\ell_2$-normalised. The squared inner product
+is sign-invariant, and labels are canonicalised to one hemisphere. Together these remove
+the double-cover ambiguity---$\mathbf{q}$ and $-\mathbf{q}$ encode the same rotation---
+which otherwise gives naive quaternion MSE contradictory
+targets~\citep{zhou2019continuity}.
+
+\paragraph{The $2{\times}2$ arms.} In the \emph{``frozen''} arms the backbone runs in
+inference mode and keeps its ImageNet BatchNorm statistics, so only the head is trained.
+In the \emph{``unfrozen''} arms the final ResNet stage (layer 4) is trained as well, so
+its BatchNorm statistics track the (augmented) synthetic training distribution. All arms
+share one configuration (Adam, learning rate $10^{-3}$, batch 16, 20 epochs, checkpoints
+on even epochs), and each arm keeps the checkpoint with the best \emph{synthetic}
+validation rotation error. Three arms are repeated over three seeds; the frozen
+un-augmented arm is single-seed, with head-only retrains in App.~\ref{app:revision}.
+
+\paragraph{Augmentation.} The photometric factor is a good-faith attempt to anticipate
+harsh real illumination: brightness (0.65--1.5) and contrast
+($\pm$0.5) jitter, log-uniform gamma in $[0.5,2]$, a soft clamped additive
+Gaussian ``sun glare'' blob ($\sigma \in [10,50]$\,px), Gaussian blur, and
+additive Gaussian noise (stochastic components at $p{=}0.5$), plus random
+erasing. Section~\ref{sec:directional} examines what it actually prepares the model for.
+
+\paragraph{Metrics.} We track normalised translation error $\Etrans =
+\lVert\hat{\mathbf{t}}-\mathbf{t}\rVert / \lVert\mathbf{t}\rVert$ and geodesic
+rotation error $\Erot = 2\arccos\lvert\langle\hat{\mathbf{q}},
+\mathbf{q}\rangle\rvert$. Their sum is the official SPEED+ score
+$S = \Etrans + \Erot$~\citep{kisantal2020speed}; we report the unthresholded sum,
+whereas SPEC2021~\citep{park2023spec2021} additionally zeroes errors below a calibration threshold. Under
+uniformly random orientations the rotation angle has density $(1-\cos\theta)/\pi$,
+so random guessing achieves $\mathbb{E}[\theta] = \pi/2 + \nicefrac{2}{\pi} \approx
+2.207$\,rad; we call this the \emph{chance level}.\footnote{SPEED+ orientations are
+not uniform on $SO(3)$, so we also check the level empirically. A single constant
+pose fitted on the 28{,}000 training labels alone---never on a test domain---scores
+$\Erot = 2.176$ on synthetic val, $2.203$ on lightbox and $2.199$ on sunlamp
+($\Etrans = 0.415$, $0.367$, $0.372$), i.e.\ at most $0.031$\,rad from the uniform value,
+so we use $2.207$ throughout. These are achievable scores of a fitted constant, not
+of a provably optimal one, and therefore upper-bound the best constant predictor.
+App.~\ref{app:constant} gives the method.} We define \emph{skill} as $2.207 - \Erot$,
+which separates errors that look close. As raw errors, 1.67 and 2.07\,rad are neighbours;
+as skill they are 0.54 and 0.13\,rad---meaningfully better than chance, and barely better
+than chance.
+
+\paragraph{Code and data.} SPEED+ comes from its official hosts. The code, configs,
+per-seed results, and conformal analysis behind every number here are at
+\url{https://github.com/lokindoo/spacecraft-pose-estimation}.
+
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+  \caption{Full results: mean $\pm$ s.d.\ over seeds \{42, 43, 44\}; the frozen
+  un-augmented arm is single-seed ($\dagger$). $\Etrans$ range-normalised, $\Erot$ in rad
+  (chance level 2.207); checkpoints picked by best synthetic val.\ $\Erot$.}
+  \label{tab:results}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.4pt}
+  \begin{tabular}{ll cc cc cc}
+    \toprule
+    & & \multicolumn{2}{c}{Synthetic (val)} & \multicolumn{2}{c}{Lightbox} & \multicolumn{2}{c}{Sunlamp} \\
+    \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+    Backbone & Aug. & $\Etrans$ & $\Erot$ & $\Etrans$ & $\Erot$ & $\Etrans$ & $\Erot$ \\
+    \midrule
+    frozen$^{\dagger}$ & --  & 0.066 & 1.053 & 0.151 & 1.752 & 0.253 & 2.048 \\
+    frozen$^{\ddagger}$ & \checkmark & $0.073{\pm}0.002$ & $1.185{\pm}0.019$ & $0.121{\pm}0.005$ & $1.708{\pm}0.031$ & $0.304{\pm}0.024$ & $1.876{\pm}0.010$ \\
+    layer 4 & --  & $0.036{\pm}0.002$ & $0.317{\pm}0.010$ & $0.169{\pm}0.027$ & $1.166{\pm}0.018$ & $0.311{\pm}0.036$ & $1.534{\pm}0.075$ \\
+    layer 4 & \checkmark & $0.042{\pm}0.002$ & $0.322{\pm}0.027$ & $0.150{\pm}0.017$ & $\mathbf{0.987{\pm}0.010}$ & $0.355{\pm}0.081$ & $1.468{\pm}0.119$ \\
+    \bottomrule
+    \multicolumn{8}{@{}l}{\scriptsize $^{\dagger}$$n{=}1$ (seed 42); 3-seed head-only retrains: $\Erot$ s.d.\ 0.017, 0.026, 0.031. $^{\ddagger}$Seeds 43, 44 on an Apple M5. Per-seed rows: App.~\ref{app:perseed}.}\\
+  \end{tabular}
+\end{table}
+
+\subsection{Synthetic gains transfer asymmetrically}
+\label{sec:asymmetry}
+
+Our initial frozen-backbone configuration (4{,}000 training images, the head reading
+the backbone's 1{,}000-d ImageNet logits rather than pooled features)
+reached $\Erot = 1.666$\,rad on the same 2{,}000-image synthetic validation
+split used throughout, 2.002 on lightbox, and 2.073 on sunlamp.
+Scaling to 28{,}000 images and 2048-d pooled features improved synthetic
+rotation by 0.613\,rad (1.666\,$\to$\,1.053), but only 0.025\,rad on sunlamp
+(2.073\,$\to$\,2.048), less than the frozen head's seed s.d.\ there (0.031\,rad). Lightbox absorbed roughly 40\% of the gain
+(2.002\,$\to$\,1.752). Under harsh illumination the improvement all but vanished: the
+scaled baseline holds 1.15\,rad of synthetic skill but keeps only 14\% of it on sunlamp
+(39\% on lightbox).
+
+Pre-registered checks (App.~\ref{app:revision}) support this reading. Over three
+seeds, the four \{4k, 28k\}\,$\times$\,\{logits, pooled\} cells split the synthetic
+gain roughly evenly between data and features (0.33 and 0.29\,rad), and neither moves
+sunlamp beyond seed variation. A tuned head gains another 0.10\,rad on synthetic and
+nothing on the real domains. Re-estimating all BatchNorm statistics on synthetic images,
+weights fixed, makes the frozen head worse everywhere, so the layer-4 gain below is not a
+matter of normalisation statistics alone.
+
+Unfreezing layer 4 behaves differently (Table~\ref{tab:results}). Synthetic $\Erot$ drops
+1.05\,$\to$\,0.32, and this time the real domains follow: sunlamp 2.05\,$\to$\,1.53 and
+lightbox 1.75\,$\to$\,1.17, so roughly 70--80\% of the marginal synthetic gain carries
+across. What produced a gain therefore matters as much as its size: showing the frozen
+ImageNet backbone more data helped little, while adapting the representation helped a
+lot. Even so, the layer-4 no-augmentation arm keeps only 36\% of its skill on sunlamp (55\% on lightbox),
+and its SPEED+ score degrades 3.8--5.2$\times$ ($S{=}0.353$ synthetic, 1.335 lightbox,
+1.845 sunlamp), at the low end of the 2019 challenge's range but not evidence of a
+smaller gap (Sec.~\ref{sec:discussion}).
+
+
+\subsection{Augmentation is directional}
+\label{sec:directional}
+
+Seeds are paired across arms (42, 43, 44 in both), so we read the per-seed
+differences rather than comparing spreads. On lightbox, augmentation improves
+every seed: $-0.183$, $-0.185$, $-0.170$\,rad, i.e.\ 3/3 at ${\sim}15\%$, moving
+the mean from $1.166 \pm 0.018$ to $0.987 \pm 0.010$\,rad. On sunlamp the paired
+differences change sign: $+0.116$, $-0.265$, $-0.047$\,rad
+($1.534 \pm 0.075 \to 1.468 \pm 0.119$), a spread wider than the effect it would
+have to establish. Translation is a weaker indicator, but it points the same way
+(Table~\ref{tab:results}): lightbox improves within noise, while on sunlamp two of the
+three augmented seeds ($0.405$, $0.399$) fail to beat the fitted constant's $0.372$.
+Augmentation pushes sunlamp translation to the no-skill line. On the unfrozen arms the
+in-domain synthetic error is essentially unchanged ($0.317 \to 0.322$\,rad), so the
+lightbox gain does not come at the cost of the synthetic reference. We report absolute
+error, not the synthetic-to-real ``gap'', which can narrow merely because the reference
+degrades: with the backbone frozen, augmentation worsens synthetic error on every seed
+(by $0.134$--$0.169$\,rad, paired against head-only retrains; App.~\ref{app:revision}).
+There the direction also reverses: sunlamp improves on every seed ($-0.069$ to
+$-0.132$\,rad), and by more than lightbox ($-0.012$ to $-0.117$), so augmentation
+favours lightbox only once layer 4 adapts.
+
+\emph{Ablation} (pre-registered; App.~\ref{app:revision}). Dropping blur and noise
+lowers sunlamp $\Erot$ on two of three seeds ($-0.184$, $+0.006$, $-0.117$\,rad) and
+worsens lightbox on all three; also dropping the glare blob recovers lightbox but not
+sunlamp. Neither sunlamp effect is resolved, and a same-hardware control rerun shifts
+seed 42's sunlamp error by $-0.142$\,rad, as much as the effects.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.47\linewidth}
+    \includegraphics[width=\linewidth]{figures/crops_triptych_poolall.png}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.49\linewidth}
+    \caption{What the augmentation actually models. Columns: augmented synthetic training
+  samples, and real test samples from each domain. Below each is the pixel-intensity
+  density (log counts), pooled over every image in that split. The augmented density is
+  overlaid on both real columns (dashed): far from both, and closer to lightbox---total
+  variation $0.63$ against $0.80$. Gradient statistics give the same ordering
+  (App.~\ref{app:revision}).}
+    \label{fig:crops}
+  \end{minipage}
+\end{figure}
+
+\emph{Mechanism.} The stack models \emph{diffuse} illumination variation: jitter and a
+soft clamped blob simulate gentle, spatially smooth lighting change, which is what
+lightbox is. Sunlamp is not: a collimated beam produces highlights off metallic and
+foil surfaces, cast shadows, and \emph{clipped} regions. Photometric jitter only
+brightens smoothly: the augmented images end up brighter overall than either real
+domain, yet clip less often than sunlamp (2.0\% of pixels against 2.8\%). We expected
+blur, noise and the glare blob to work against sunlamp's sharp, bright structure; the
+ablation does not confirm this, and per-pixel gradients do not show sunlamp as sharper,
+since most of its frame is dark (edge density 2.0\%, against 6.6\% for lightbox and
+10.7\% for the augmented stack). Gradients do show direction: un-augmented synthetic
+images are closer to lightbox than to sunlamp (gradient total variation 0.07 against
+0.26), and the stack, mostly through blur and noise, pushes them away from both (0.29
+and 0.51). Finally, layer 4's BatchNorm statistics track the augmented synthetic distribution, which
+fits neither real domain well and lightbox less badly (Fig.~\ref{fig:crops}).
+Augmentation pushed training toward the domain it was already least wrong about. Domain
+randomization~\citep{tobin2017domainrand} helps where it brackets the target domain; ours
+brackets neither, and misses sunlamp by more.
+
+\subsection{The model does not know it is failing}
+\label{sec:conformal}
+
+Does the estimator's uncertainty survive the shift? We calibrate split conformal
+regions~\citep{vovk2005algorithmic,lei2018distribution,angelopoulos2023gentle} per arm on
+1{,}000 fresh synthetic images, used neither for training nor for checkpoint selection.
+The score is Euclidean metres for translation (a keep-out sphere) and geodesic angle for
+rotation (a cone), with the finite-sample-corrected quantile. At nominal 90\%, in-domain test coverage is close to nominal for every
+arm and metric (87.7--91.4\%); its Clopper--Pearson~\citep{clopper1934use} intervals
+include 90\% in every case but one, the frozen no-augmentation arm's translation
+(87.7\%, 85.5--89.7\%), which is slightly anti-conservative. On the real domains it collapses. For the seeded no-augmentation
+arms, rotation coverage is 9--13\% on sunlamp and 21--27\% on lightbox (translation
+14--18\% / 33--35\%); App.~\ref{app:conformal} gives every arm, domain and seed, with
+Clopper--Pearson intervals and inflation factors. Restoring 90\% rotation coverage on
+sunlamp would mean inflating these arms' attitude cone ${\sim}5$--$6\times$, from ${\sim}0.5$ to
+${\sim}2.8$\,rad---a cone holding roughly 78\% of all
+orientations.\footnote{The fraction of $SO(3)$ lying within geodesic angle
+$\alpha$ of a fixed rotation is $F(\alpha) = (\alpha - \sin\alpha)/\pi$; so
+$F(2.79) \approx 0.78$, and $F(2.30)$ to $F(2.42)$ span $0.49$ to $0.56$.}
+Coverage mirrors the directional finding of
+Sec.~\ref{sec:directional}, where augmentation increases lightbox rotation coverage to
+33--38\% but sunlamp only to 13--15\%. The frozen arms fail the opposite
+way: their 90\% attitude cone already spans 2.30--2.42\,rad---49--56\% of
+\emph{all possible orientations}---valid in-domain, but operationally meaningless.
+A navigation filter fed these poses in deployment would receive wrong inputs that look
+exactly as confident as correct ones (Fig.~\ref{fig:reliability}).
+Test-time adaptation does not rescue this: re-estimating layer 4's BatchNorm statistics
+on unlabelled real images (AdaBN~\citep{li2018adabn}; App.~\ref{app:revision}) lowers
+rotation error on every layer-4 checkpoint (on average by 0.09\,rad on lightbox, 0.16
+on sunlamp), yet rotation coverage reaches only 24--40\% and 11--20\%.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[c]{0.37\linewidth}
+    \includegraphics[width=\linewidth]{figures/reliability_unfrozen_no_aug_seed42_rotation.png}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.59\linewidth}
+    \caption{Conformal reliability of the attitude cone, layer 4
+  no-augmentation arm (seed 42). In-domain coverage tracks the diagonal; both
+  real domains collapse far below it. The guarantee is intact---exchangeability
+  is what broke.}
+    \label{fig:reliability}
+  \end{minipage}
+  % NOTE: seed-naming title already cropped out of the PNG.
+\end{figure}
+
+\section{Discussion and limitations}
+\label{sec:discussion}
+
+\paragraph{Ratios flatter weak models.} A degradation ratio divides by in-domain error:
+on sunlamp even the skill-free constant pose (App.~\ref{app:constant}) scores only
+$7.3\times$ our synthetic $S$, so our modest ratio does not mean a small gap. Nor do the
+2019 results separate method classes: PnP entries in the top ten degraded
+$4.8$--$40\times$, the others $2.7$--$24\times$~\citep{kisantal2020speed}. SPNv2~\citep{park2024spnv2}, the reference sim-to-real
+method on SPEED+, closes far more of the gap with multi-task representations and heavy
+style augmentation; we characterise how gains transfer under a simple estimator rather
+than compete with it.
+
+\paragraph{Limitations.} The frozen un-augmented arm was trained end to end on one seed,
+the ablation arms and two frozen augmented seeds on different hardware from the
+published ones, and sunlamp is the smaller
+test set (2{,}791 images): three seeds do not resolve sunlamp effects of 0.1\,rad. We
+study one estimator on one benchmark, at $320{\times}512$; with real-domain errors near
+1\,rad this is a diagnostic baseline, not a deployable navigator. Our directionality
+claim is about the match between an augmentation and the shift it faces, not about
+photometric augmentation in general, and our image statistics pool whole frames, which
+dark background dominates; object-masked statistics would test the mechanism more
+directly. Our conformal coverage is also marginal rather than conditional: fixed
+metre-radius spheres under-cover distant targets even in-domain, and range-normalising
+overcorrects.
+
+\paragraph{Future work.} The mechanism suggests its own tests: augmentation modelling
+sunlamp's actual structure (specular highlights, hard shadows, saturation clipping), full
+fine-tuning, and weighted conformal prediction~\citep{tibshirani2019covariate}, which
+needs density ratios between domains that barely overlap---exactly what sim-to-real lacks.
+
+For fields that must rely on synthetic data, ask of a robustness intervention not
+``how much does it help?'' but ``which way does it push the training distribution?'';
+and validate uncertainty under the shift, or a wrong pose arrives wrapped in a confident
+interval.
+
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% Reproducibility checklist. Sim2Science CFP: "placed after the references and before
+% the appendix; it does not count toward the page limit. Missing or incomplete
+% checklists may lead to desk rejection." Any appendix (S10) goes BELOW this input.
+\newpage
+\input{checklist}
+
+% ---- Appendix: after the checklist, per the Sim2Science CFP ----
+\newpage
+\input{appendix}
+\input{appendix_revision}
+
+\end{document}
