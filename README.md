@@ -46,9 +46,11 @@ operator*, arising in the detector rather than in light transport.
 
 ## What the misspecification costs
 
-Enough to matter. In SPEC2021, the competition run on this benchmark, the
-winning entry's pose score degraded roughly **40×** between synthetic validation
-and real hardware-in-the-loop imagery.
+Enough to matter. In the 2019 Satellite Pose Estimation Challenge, run on this
+benchmark's predecessor SPEED, whose real test images show the same mockup, the
+top ten entries' pose scores degraded **2.7–40×** from the synthetic to the real
+test set: 40× for the winner, 5.3× for the runner-up, 8.5× at the median
+([Kisantal et al. 2020](https://arxiv.org/abs/1911.02050), Table II).
 
 [SPEED+](https://zenodo.org/records/5588480) exists to study exactly this. It
 pairs ~60,000 labelled synthetic images of the Tango spacecraft with ~9,500 real
@@ -132,14 +134,15 @@ score. The refinement is not implemented in this script.) Translation is the unc
 ## Headline result
 
 E_T is range-normalised, E_R is in radians. Mean ± s.d. over seeds {42, 43, 44};
-frozen arms are single-seed (†). Head-only retrains of the frozen arm on cached
-features put its seed s.d. at 0.017 / 0.026 / 0.031 rad (synthetic / lightbox /
-sunlamp); see [Revision experiments](#revision-experiments).
+the frozen un-augmented arm is single-seed (†). Head-only retrains of that arm on
+cached features put its seed s.d. at 0.017 / 0.026 / 0.031 rad (synthetic /
+lightbox / sunlamp); see [Revision experiments](#revision-experiments). Frozen
+augmented seeds 43 and 44 were trained on an Apple M5 (‡), the rest on Colab.
 
 | Backbone | Aug. | Synthetic E_T | Synthetic E_R | Lightbox E_T | Lightbox E_R | Sunlamp E_T | Sunlamp E_R |
 |---|---|---|---|---|---|---|---|
 | frozen† | — | 0.066 | 1.053 | 0.151 | 1.752 | 0.253 | 2.048 |
-| frozen† | ✓ | 0.071 | 1.180 | 0.118 | 1.718 | 0.306 | 1.864 |
+| frozen‡ | ✓ | 0.073±0.002 | 1.185±0.019 | 0.121±0.005 | 1.708±0.031 | 0.304±0.024 | 1.876±0.010 |
 | layer 4 | — | 0.036±0.002 | 0.317±0.010 | 0.169±0.027 | 1.166±0.018 | 0.311±0.036 | 1.534±0.075 |
 | layer 4 | ✓ | 0.042±0.002 | 0.322±0.027 | 0.150±0.017 | **0.987±0.010** | 0.355±0.081 | 1.468±0.119 |
 
@@ -175,7 +178,7 @@ beyond seed variation. Tuning the head's learning rate and epochs gains another
 BatchNorm layer on synthetic images, weights fixed, makes the frozen head worse
 on all three domains, so the layer-4 gain is not normalisation statistics alone.
 
-### 2. Augmentation is directional: it helps in the direction it models
+### 2. Once the backbone adapts, augmentation helps only in the direction it models
 
 The discrepancy model above was built in good faith to anticipate harsh real
 illumination. It does not model harsh illumination. What it models is *diffuse*
@@ -184,6 +187,10 @@ illumination variation, which is lightbox:
 - **Lightbox**: improves on every seed (−0.183, −0.185, −0.170 rad). 3/3, ~15%.
 - **Sunlamp**: the paired differences change sign (+0.116, −0.265, −0.047), a
   spread wider than the effect it would have to establish.
+- **With the backbone frozen, the order reverses**: sunlamp improves on every
+  seed (−0.069 to −0.132 rad), and by more than lightbox (−0.012 to −0.117),
+  while synthetic error worsens on every seed (+0.134 to +0.169). Augmentation
+  favours lightbox only once layer 4 adapts.
 
 ![What the augmentation actually models](figures/crops_triptych_poolall.png)
 
@@ -243,8 +250,8 @@ Restoring honest 90% rotation coverage on sunlamp would need the attitude cone
 inflated 5–6×, from ~0.5 to ~2.8 rad, giving a cone that contains roughly 78% of
 all possible orientations.
 
-The frozen arms fail the opposite way. Their 90% cone already spans 2.30–2.40
-rad, which is 49–55% of every possible orientation: valid in-domain, and
+The frozen arms fail the opposite way. Their 90% cone already spans 2.30–2.42
+rad, which is 49–56% of every possible orientation: valid in-domain, and
 operationally meaningless.
 
 The guarantee is intact throughout. What broke is exchangeability. A navigation
@@ -265,18 +272,21 @@ in a confident interval.
 
 ## Limitations
 
-- The frozen arms were trained end to end on one seed (their seed spread comes
-  from head-only retrains), and the ablation arms ran on different hardware
-  (an Apple M5) from the published ones (Colab). Sunlamp is the smaller test set
+- The frozen un-augmented arm was trained end to end on one seed (its seed
+  spread comes from head-only retrains), and the ablation arms and two frozen
+  augmented seeds ran on different hardware (an Apple M5) from the published
+  ones (Colab). Sunlamp is the smaller test set
   (2,791 images): three seeds do not resolve sunlamp effects of 0.1 rad.
 - One estimator, one benchmark, images downscaled to 320×512. With real-domain
   errors near 1 rad, this is a diagnostic baseline, not a deployable navigator.
 - The directionality claim is about *this* augmentation stack against *these*
   two domains, not about photometric augmentation in general.
-- Direct regression leans on coarse global shape, so its relative degradation
-  (3.8–5.2× for the layer-4 no-augmentation arm) is much smaller than the ~40× reported for keypoint+PnP pipelines.
-  That is not evidence of a small gap; it is a different method class with a
-  different failure mode.
+- The relative degradation (3.8–5.2× for the layer-4 no-augmentation arm) sits
+  at the low end of the 2019 challenge's 2.7–40×, but a ratio divides by
+  in-domain error: on sunlamp even the skill-free constant pose scores only 7.3×
+  our synthetic S. A small ratio here is not evidence of a small gap. The 2019
+  results don't separate method classes either: PnP entries in the top ten
+  degraded 4.8–40×, the others 2.7–24×.
 - Conformal coverage here is *marginal*. Fixed metre-radius spheres under-cover
   distant targets even in-domain, and range-normalising overcorrects.
   Conditional calibration is future work.
@@ -378,8 +388,9 @@ Add `--smoke` to `train.py` for a two-minute CPU wiring check on 32 images.
 ## Revision experiments
 
 Added after review, with predictions and decision rules committed before any
-result was opened. Their numbers are in [`results/revision/`](results/revision/)
-and App. D of the paper; selection uses synthetic validation only throughout.
+result was opened; the record is in [`preregistration/`](preregistration/).
+Their numbers are in [`results/revision/`](results/revision/) and App. D of the
+paper; selection uses synthetic validation only throughout.
 
 ```bash
 # Augmentation ablation: arm A (no blur/noise), arm B (jitter, gamma, erasing),
@@ -387,6 +398,9 @@ and App. D of the paper; selection uses synthetic validation only throughout.
 python scripts/run_seeds.py --config unfrozen_aug_no_blur_noise --seeds 42 43 44
 python scripts/run_seeds.py --config unfrozen_aug_jitter_gamma --seeds 42 43 44
 python scripts/run_seeds.py --config unfrozen_aug --seeds 42
+
+# Frozen backbone + full stack, seeds 43 and 44 (Table 1's frozen augmented row)
+python scripts/run_seeds.py --config frozen_aug --seeds 43 44
 
 # Frozen-backbone block on cached features (CPU, minutes per head)
 python scripts/cache_features.py --bn imagenet

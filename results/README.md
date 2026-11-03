@@ -19,8 +19,9 @@ them a regression test rather than documentation.
 | `rotation` | E_R, geodesic angle in radians. Chance level is 2.207. |
 | `speed_score` | S = E_T + E_R, the official SPEED+ score, unthresholded |
 
-Table 1 of the paper is this file aggregated: mean ± s.d. over seeds for the
-`layer4` rows, single values for the frozen ones.
+Table 1 of the paper is this file aggregated, with the frozen augmented row
+joined by its seeds 43 and 44 from `revision/frozen_aug_seeds43_44.csv`: mean ±
+s.d. over seeds, except the frozen un-augmented row, which is single-seed.
 
 ## `conformal_coverage.csv`
 
@@ -46,7 +47,7 @@ Two things to know when reading it:
 - Rotation inflation is capped at π/q̂. Rotation error cannot exceed π, so a
   small rotation inflation means either a genuinely robust model or a region
   that already fills most of SO(3) and has nowhere to grow. For the frozen arms
-  it is the second: their 90% cone spans 2.30–2.40 rad, roughly half of all
+  it is the second: their 90% cone spans 2.30–2.42 rad, roughly half of all
   possible orientations. Read inflation next to the SO(3) share, never alone.
 
 ## `constant_baseline.csv`
@@ -105,6 +106,8 @@ appendix tables are generated from these files.
 | `arm_b_jitter_gamma_erasing.csv` | ablation arm B (jitter, gamma and random erasing only; config `unfrozen_aug_jitter_gamma`) |
 | `control_unfrozen_aug_seed42.csv` | the full stack, seed 42, retrained with this code on the ablation's hardware (Apple M5), to separate hardware and code from the arm |
 | `conformal_ablation.csv` | conformal coverage for the seven runs above, same columns as `conformal_coverage.csv` |
+| `frozen_aug_seeds43_44.csv` | the frozen backbone with the full stack, seeds 43 and 44, trained on the Apple M5; Table 1 averages them with the published seed 42 |
+| `conformal_frozen_aug.csv` | conformal coverage for those two seeds, same columns as `conformal_coverage.csv` |
 | `frozen_heads.csv` | frozen-backbone heads retrained on cached features: seeds, the {4k, 28k} × {logits, pooled} cells, the learning-rate × epochs sweep, and the synthetic-BN head. `name` encodes BN regime, features, training size, lr, epochs and seed |
 | `head_sweep_selection.json` | the sweep candidates' synthetic-validation E_R at seed 42, and the winner |
 | `conformal_heads.csv` | conformal coverage for every head |
