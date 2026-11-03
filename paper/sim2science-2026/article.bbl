@@ -1,0 +1,94 @@
+\begin{thebibliography}{17}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Angelopoulos and Bates(2023)]{angelopoulos2023gentle}
+Anastasios~N. Angelopoulos and Stephen Bates.
+\newblock Conformal prediction: A gentle introduction.
+\newblock \emph{Foundations and Trends in Machine Learning}, 16\penalty0 (4):\penalty0 494--591, 2023.
+
+\bibitem[Clopper and Pearson(1934)]{clopper1934use}
+Charles~J. Clopper and Egon~S. Pearson.
+\newblock The use of confidence or fiducial limits illustrated in the case of the binomial.
+\newblock \emph{Biometrika}, 26\penalty0 (4):\penalty0 404--413, 1934.
+
+\bibitem[Deng et~al.(2009)Deng, Dong, Socher, Li, Li, and Fei-Fei]{deng2009imagenet}
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li~Fei-Fei.
+\newblock {ImageNet}: A large-scale hierarchical image database.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pages 248--255, 2009.
+
+\bibitem[He et~al.(2016)He, Zhang, Ren, and Sun]{he2016resnet}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pages 770--778, 2016.
+
+\bibitem[Kendall et~al.(2015)Kendall, Grimes, and Cipolla]{kendall2015posenet}
+Alex Kendall, Matthew Grimes, and Roberto Cipolla.
+\newblock {PoseNet}: A convolutional network for real-time {6-DOF} camera relocalization.
+\newblock In \emph{IEEE International Conference on Computer Vision (ICCV)}, pages 2938--2946, 2015.
+
+\bibitem[Kisantal et~al.(2020)Kisantal, Sharma, Park, Izzo, M{\"a}rtens, and D'Amico]{kisantal2020speed}
+Mate Kisantal, Sumant Sharma, Tae~Ha Park, Dario Izzo, Marcus M{\"a}rtens, and Simone D'Amico.
+\newblock Satellite pose estimation challenge: Dataset, competition design, and results.
+\newblock \emph{IEEE Transactions on Aerospace and Electronic Systems}, 56\penalty0 (5):\penalty0 4083--4098, 2020.
+
+\bibitem[Lei et~al.(2018)Lei, G'Sell, Rinaldo, Tibshirani, and Wasserman]{lei2018distribution}
+Jing Lei, Max G'Sell, Alessandro Rinaldo, Ryan~J. Tibshirani, and Larry Wasserman.
+\newblock Distribution-free predictive inference for regression.
+\newblock \emph{Journal of the American Statistical Association}, 113\penalty0 (523):\penalty0 1094--1111, 2018.
+
+\bibitem[Li et~al.(2018)Li, Wang, Shi, Hou, and Liu]{li2018adabn}
+Yanghao Li, Naiyan Wang, Jianping Shi, Xiaodi Hou, and Jiaying Liu.
+\newblock Adaptive batch normalization for practical domain adaptation.
+\newblock \emph{Pattern Recognition}, 80:\penalty0 109--117, 2018.
+
+\bibitem[Park and D'Amico(2024)]{park2024spnv2}
+Tae~Ha Park and Simone D'Amico.
+\newblock {SPNv2}: Multi-task learning of unified representations for spacecraft pose estimation across domain gap.
+\newblock \emph{Advances in Space Research}, 73\penalty0 (11):\penalty0 5726--5740, 2024.
+
+\bibitem[Park et~al.(2022)Park, M{\"a}rtens, Lecuyer, Izzo, and D'Amico]{park2022speedplus}
+Tae~Ha Park, Marcus M{\"a}rtens, Gurvan Lecuyer, Dario Izzo, and Simone D'Amico.
+\newblock {SPEED+}: Next-generation dataset for spacecraft pose estimation across domain gap.
+\newblock In \emph{IEEE Aerospace Conference}, 2022.
+\newblock Dataset: Zenodo record 5588480.
+
+\bibitem[Park et~al.(2023)Park, M{\"a}rtens, Jawaid, Wang, Zhao, Chin, Izzo, and D'Amico]{park2023spec2021}
+Tae~Ha Park, Marcus M{\"a}rtens, Mohsi Jawaid, Zi~Wang, Bo~Zhao, Tat-Jun Chin, Dario Izzo, and Simone D'Amico.
+\newblock Satellite pose estimation competition 2021: Results and analyses.
+\newblock \emph{Acta Astronautica}, 204:\penalty0 640--665, 2023.
+
+\bibitem[Proen{\c{c}}a and Gao(2020)]{proenca2020urso}
+Pedro~F. Proen{\c{c}}a and Yang Gao.
+\newblock Deep learning for spacecraft pose estimation from photorealistic rendering.
+\newblock In \emph{IEEE International Conference on Robotics and Automation (ICRA)}, pages 6007--6013, 2020.
+
+\bibitem[Sharma and D'Amico(2020)]{sharma2020spn}
+Sumant Sharma and Simone D'Amico.
+\newblock Neural network-based pose estimation for noncooperative spacecraft rendezvous.
+\newblock \emph{IEEE Transactions on Aerospace and Electronic Systems}, 56\penalty0 (6):\penalty0 4638--4658, 2020.
+
+\bibitem[Tibshirani et~al.(2019)Tibshirani, Barber, Cand{\`e}s, and Ramdas]{tibshirani2019covariate}
+Ryan~J. Tibshirani, Rina~Foygel Barber, Emmanuel Cand{\`e}s, and Aaditya Ramdas.
+\newblock Conformal prediction under covariate shift.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2019.
+
+\bibitem[Tobin et~al.(2017)Tobin, Fong, Ray, Schneider, Zaremba, and Abbeel]{tobin2017domainrand}
+Josh Tobin, Rachel Fong, Alex Ray, Jonas Schneider, Wojciech Zaremba, and Pieter Abbeel.
+\newblock Domain randomization for transferring deep neural networks from simulation to the real world.
+\newblock In \emph{IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, pages 23--30, 2017.
+
+\bibitem[Vovk et~al.(2005)Vovk, Gammerman, and Shafer]{vovk2005algorithmic}
+Vladimir Vovk, Alexander Gammerman, and Glenn Shafer.
+\newblock \emph{Algorithmic Learning in a Random World}.
+\newblock Springer, 2005.
+
+\bibitem[Zhou et~al.(2019)Zhou, Barnes, Lu, Yang, and Li]{zhou2019continuity}
+Yi~Zhou, Connelly Barnes, Jingwan Lu, Jimei Yang, and Hao Li.
+\newblock On the continuity of rotation representations in neural networks.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pages 5745--5753, 2019.
+
+\end{thebibliography}
