@@ -118,3 +118,44 @@ The ablation arms and the control ran with `scripts/run_seeds.py` on an Apple
 M5 GPU, whereas the published arms ran in Colab. The control lands within seed
 noise of the published seed 42, but its sunlamp shift (−0.142 rad) is as large
 as the ablation effects, which is why those are reported as unresolved.
+
+## `predictions/`
+
+Every image's predicted pose, for the 20 runs behind the paper's tables, so a
+new metric or analysis needs neither the data pipeline nor a GPU. Written by
+`scripts/export_predictions.py`, which reads the files back, recomputes every
+error from the CSV poses, and fails on any disagreement.
+
+- **`labels.csv.gz`:** one row per image: `domain`, `filename`, the true pose
+  (`qw_true` … `qz_true`, `x_true` … `z_true`) and `range` (‖r_true‖, metres).
+  These are SPEED+ labels (Park et al., Zenodo record 5588480), redistributed
+  under its CC BY 4.0 licence.
+- **`<run>.csv.gz`:** the same rows in the same order: `domain`, `filename`,
+  the predicted pose (`qw_pred` … `z_pred`), and the three per-image errors
+  `rotation` (rad), `translation_relative` and `translation_metres`.
+
+Quaternions are scalar-first, and their matrix maps body vectors into the
+camera frame, as in the SPEED+ devkit. Positions are in metres.
+
+| `domain` | Images | What it is |
+|---|---|---|
+| `synthetic` | 2,000 | synthetic validation, used for checkpoint selection (`synthetic_old` in `conformal_coverage.csv`) |
+| `calibration` | 1,000 | fresh synthetic images that calibrate the conformal q̂ |
+| `in_domain_test` | 1,000 | fresh synthetic images for in-domain coverage |
+| `lightbox` | 6,740 | real, diffuse illumination |
+| `sunlamp` | 2,791 | real, harsh direct illumination |
+
+| Runs | What they are |
+|---|---|
+| `frozen_no_aug_seed42`, `frozen_aug_seed42`, `unfrozen_{no_aug,aug}_seed{42,43,44}` | the eight published arms (Colab) |
+| `frozen_aug_seed{43,44}` | Table 1's frozen augmented row, seeds 43 and 44 (Apple M5) |
+| `unfrozen_aug_no_blur_noise_seed{42,43,44}`, `unfrozen_aug_jitter_gamma_seed{42,43,44}` | ablation arms A and B (Apple M5) |
+| `control_unfrozen_aug_seed42` | the full stack, seed 42, retrained on the Apple M5 |
+| `head_imagenetbn_pooled_28k_lr0.001_ep20_seed{42,43,44}` | the frozen un-augmented head retrained on cached features, which gives that arm its seed spread |
+
+```python
+import pandas as pd
+labels = pd.read_csv("results/predictions/labels.csv.gz")
+run = pd.read_csv("results/predictions/unfrozen_aug_seed42.csv.gz")
+run.groupby("domain")["rotation"].mean()   # 0.352 synthetic, 0.986 lightbox, 1.592 sunlamp
+```
