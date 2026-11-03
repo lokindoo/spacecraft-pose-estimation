@@ -8,6 +8,7 @@ running on Colab, a local machine, or a rented GPU box.
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 from .paths import Paths
 
@@ -56,3 +57,20 @@ def add_local_images_argument(parser: argparse.ArgumentParser) -> argparse.Argum
         "something under /content, never the mounted Drive.",
     )
     return parser
+
+
+def parse_records(specs: list[str]) -> dict[str, Path]:
+    """
+    Prediction pickles given as PATH or LABEL=PATH. A bare path is labelled by
+    its stem; LABEL= is for stems that collide, such as a published run and its
+    rerun on other hardware.
+    """
+    records = {}
+    for spec in specs:
+        label, _, path = spec.rpartition("=")
+        path = Path(path).expanduser()
+        label = label or path.stem
+        if label in records:
+            raise ValueError(f"two records labelled {label!r}; use LABEL=PATH")
+        records[label] = path
+    return records

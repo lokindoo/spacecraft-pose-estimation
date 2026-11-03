@@ -159,3 +159,17 @@ labels = pd.read_csv("results/predictions/labels.csv.gz")
 run = pd.read_csv("results/predictions/unfrozen_aug_seed42.csv.gz")
 run.groupby("domain")["rotation"].mean()   # 0.352 synthetic, 0.986 lightbox, 1.592 sunlamp
 ```
+
+## `arxiv/`
+
+Analyses added for the extended (arXiv) version, computed from the prediction
+records without new inference. The questions and decision rules for the first
+three were committed before their outputs were opened; see
+[`preregistration/P1_arxiv_predictions.md`](../preregistration/P1_arxiv_predictions.md) §2–§3.
+
+| File | What it holds | Made by |
+|---|---|---|
+| `rotation_error_shape.csv` | per record and domain: mean and median E_R, the share of errors within 0.3 rad of π against the uniform-guessing 0.19, and the concentration of error axes in the body and camera frames (principal axis, its eigenvalue, the share of axes within 20° of it against 0.06 for random axes), for all errors ≥ 0.5 rad and for the near-π ones | `scripts/rotation_errors.py` |
+| `rotation_error_histograms.csv` | the E_R histogram per record and domain, in 5° bins | `scripts/rotation_errors.py` |
+| `coverage_by_range.csv` | coverage of the fixed marginal 90% q̂ within five range bins (quintiles of the calibration split's range), per record, domain and score family, with Clopper–Pearson intervals | `scripts/coverage_by_range.py` |
+| `transfer_points.csv` | synthetic against real E_R, mean and s.d. over seeds, for every frozen-backbone head and layer-4 arm: the points of the transfer plot | `scripts/make_figures.py --transfer` |

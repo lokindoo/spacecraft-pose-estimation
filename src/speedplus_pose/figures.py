@@ -331,3 +331,113 @@ def _intensity_density(images, edges: np.ndarray) -> np.ndarray:
     if total == 0:
         raise ValueError("no images to build an intensity histogram from")
     return counts / (total * np.diff(edges))
+
+
+def rotation_error_histograms(
+    panels: dict[str, dict[str, np.ndarray]],
+    bins: np.ndarray,
+    path: Path | None = None,
+):
+    """
+    Rotation-error densities per domain, one panel per arm, against the
+    density uniform guessing gives, (1 - cos t)/pi.
+
+    The reference curve carries the reading. It rises towards pi, so a real
+    domain piling up near pi is only evidence of systematic flips where it
+    rises above that curve; a domain that merely tracks it is guessing.
+    """
+    centres = 0.5 * (bins[:-1] + bins[1:])
+    theta = np.linspace(0, np.pi, 200)
+    figure, axes = plt.subplots(
+        1, len(panels), figsize=(3.4 * len(panels), 2.7), sharey=True, squeeze=False
+    )
+    for ax, (name, domains) in zip(axes[0], panels.items()):
+        for domain, errors in domains.items():
+            density, _ = np.histogram(errors, bins=bins, density=True)
+            ax.step(
+                centres, density, where="mid", lw=1.6,
+                color=DOMAIN_COLOURS[domain], label=DOMAIN_LABELS[domain],
+            )
+        ax.plot(theta, (1 - np.cos(theta)) / np.pi, "k:", lw=1.2, label="uniform guessing")
+        ax.set_title(name, fontsize=10)
+        ax.set_xlim(0, np.pi)
+        ax.set_xticks([0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi])
+        ax.set_xticklabels(["0", r"$\pi/4$", r"$\pi/2$", r"$3\pi/4$", r"$\pi$"])
+        ax.set_xlabel("rotation error [rad]")
+        ax.grid(alpha=0.25)
+    axes[0][0].set_ylabel("density")
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    # Under the panels, as in reliability(): every corner of these panels holds
+    # data in at least one domain.
+    figure.legend(
+        handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.02),
+        ncol=len(labels), frameon=False, fontsize=9,
+    )
+    figure.tight_layout()
+    return _save(figure, path) if path else figure
+
+
+def transfer(
+    points: "pd.DataFrame",
+    path: Path | None = None,
+    label_points: dict[str, tuple[float, float]] | None = None,
+):
+    """
+    Synthetic against real rotation error, one point per configuration and one
+    panel per real domain.
+
+    ``points`` has columns config, family, domain, synthetic, synthetic_sd,
+    real, real_sd. The diagonal is perfect transfer, where a configuration does
+    as well on real images as on synthetic ones; the dashed line is chance.
+    Reading along a family is the point: how far real error moves for a given
+    move in synthetic error, which a table of the same numbers hides.
+
+    ``label_points`` maps a config to its label offset in points. Only a few are
+    labelled: the layer-4 arms sit within a few hundredths of each other on the
+    synthetic axis, so per-point labels there collide, and the marker shape
+    already says which family a point belongs to. Colour stays the domain's, so
+    the legend's markers are drawn neutral.
+    """
+    from matplotlib.lines import Line2D
+
+    label_points = label_points or {}
+    markers = {"frozen backbone": ("o", "none"), "layer 4 trained": ("s", None)}
+    domains = [d for d in ("lightbox", "sunlamp") if d in set(points["domain"])]
+    figure, axes = plt.subplots(1, len(domains), figsize=(3.5 * len(domains), 3.4), sharex=True, sharey=True, squeeze=False)
+    for ax, domain in zip(axes[0], domains):
+        colour = DOMAIN_COLOURS[domain]
+        for family, (marker, face) in markers.items():
+            rows = points[(points["domain"] == domain) & (points["family"] == family)]
+            ax.errorbar(
+                rows["synthetic"], rows["real"],
+                xerr=rows["synthetic_sd"].fillna(0), yerr=rows["real_sd"].fillna(0),
+                fmt=marker, markersize=6, mfc=face or colour, mec=colour, ecolor=colour,
+                elinewidth=0.8, capsize=0, label=family, linestyle="none",
+            )
+            for _, row in rows[rows["config"].isin(label_points)].iterrows():
+                dx, dy = label_points[row["config"]]
+                ax.annotate(
+                    row["config"], (row["synthetic"], row["real"]),
+                    xytext=(dx, dy), textcoords="offset points", fontsize=7, color="#333333",
+                    ha="left" if dx > 0 else "right" if dx < 0 else "center", va="center",
+                )
+        ax.plot([0, CHANCE_LEVEL], [0, CHANCE_LEVEL], color="#999999", lw=0.9, label="perfect transfer")
+        ax.axhline(CHANCE_LEVEL, color="black", ls="--", lw=0.9, label="chance level")
+        ax.set_title(DOMAIN_LABELS[domain], fontsize=10)
+        ax.set_xlabel("synthetic validation $E_R$ [rad]")
+        ax.set_xlim(0, 1.8)
+        ax.set_ylim(0.6, 2.35)
+        ax.set_aspect("equal", adjustable="box")
+        ax.grid(alpha=0.25)
+    axes[0][0].set_ylabel("real-domain $E_R$ [rad]")
+    neutral = "#555555"
+    handles = [
+        Line2D([], [], marker=marker, mfc=face or neutral, mec=neutral, ls="none", markersize=6, label=family)
+        for family, (marker, face) in markers.items()
+    ] + [
+        Line2D([], [], color="#999999", lw=0.9, label="perfect transfer"),
+        Line2D([], [], color="black", ls="--", lw=0.9, label="chance level"),
+    ]
+    figure.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=4, frameon=False, fontsize=8)
+    figure.tight_layout()
+    return _save(figure, path) if path else figure
