@@ -334,7 +334,7 @@ export SPEEDPLUS_ARTIFACTS=/path/to/artifacts
 ```bash
 pip install -r requirements.txt
 pip install -e .
-pytest tests            # 74 tests, no data required
+pytest tests            # 80 tests, no data required
 ```
 
 ### 3. Build the subsets
@@ -447,6 +447,21 @@ python scripts/adabn.py --checkpoint-dir <checkpoint-dir>   # --scope trained (l
 python scripts/image_statistics.py
 ```
 
+### Extended-version analyses
+
+Computed from the prediction records, with no new inference; outputs are in
+[`results/arxiv/`](results/arxiv/). Pass every record, as `PATH` or
+`LABEL=PATH` when two file names collide (the control shares its name with
+published seed 42).
+
+```bash
+python scripts/rotation_errors.py --records <predictions>/*.pkl \
+    control_unfrozen_aug_seed42=<control>/unfrozen_aug_seed42.pkl
+python scripts/coverage_by_range.py --records <predictions>/*.pkl \
+    control_unfrozen_aug_seed42=<control>/unfrozen_aug_seed42.pkl
+python scripts/make_figures.py --transfer     # results/ only
+```
+
 ## Repository layout
 
 ```
@@ -466,6 +481,7 @@ src/speedplus_pose/
   features.py       cached backbone features for the frozen arms
   heads.py          pose heads trained on cached features
   image_stats.py    gradient, edge and clipping statistics
+  error_analysis.py rotation-error shape and coverage by range bin
 scripts/            one job each; reproduce_table.py is the important one
 results/            the published numbers, as CSV, plus checkpoints.json;
                     results/revision/ holds the post-review experiments,
@@ -473,7 +489,7 @@ results/            the published numbers, as CSV, plus checkpoints.json;
 paper/              each paper version's LaTeX source and number ledger
 preregistration/    predictions and decision rules, committed before results
 notebooks/          three curated notebooks (see notebooks/README.md)
-tests/              74 tests; the conformal ones include coverage simulations
+tests/              80 tests; the conformal ones include coverage simulations
 ```
 
 Colab users: mount Drive, point `SPEEDPLUS_ARTIFACTS` at it so a disconnect

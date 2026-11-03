@@ -9,6 +9,9 @@ Regenerate the paper's figures.
                      underneath. Needs the prepared image subsets.
   --reliability      Figure 2: conformal reliability curves. Needs the
                      prediction records from scripts/evaluate.py.
+  --transfer         arXiv: synthetic against real rotation error, one point
+                     per configuration (frozen-backbone heads and layer-4
+                     arms). Reads results/ only, like --rotation-error.
   --rotation-error   No longer in the paper: rotation error per arm and domain
                      against the chance level. Reads results/results_2x2.csv,
                      so it needs no data and no GPU.
@@ -63,6 +66,7 @@ from speedplus_pose.figures import (
     image_grid,
     reliability,
     rotation_error_by_arm,
+    transfer,
 )
 from speedplus_pose.transforms import build_train_transform
 
@@ -93,6 +97,77 @@ def figure_rotation_error(output_dir: Path) -> None:
         {d: {ARM_LABELS[a]: v[a] for a in arms} for d, v in errors.items()},
         {d: {ARM_LABELS[a]: v[a] for a in arms} for d, v in stds.items()},
         output_dir / "rotation_error_by_arm.png",
+    )
+
+
+# Transfer plot: (family, label) per source. Frozen-backbone heads come from the
+# cached-feature block, keyed by run name without its seed suffix.
+TRANSFER_HEADS = {
+    "head_imagenetbn_logits_4k_lr0.001_ep20": "4k, logits",
+    "head_imagenetbn_pooled_4k_lr0.001_ep20": "4k, pooled",
+    "head_imagenetbn_logits_28k_lr0.001_ep20": "28k, logits",
+    "head_imagenetbn_pooled_28k_lr0.001_ep20": "28k, pooled",
+    "head_imagenetbn_pooled_28k_lr0.0003_ep60": "tuned head",
+    "head_syntheticbn_pooled_28k_lr0.001_ep20": "synthetic BN",
+}
+TRANSFER_ARMS = {
+    "frozen_aug": ("frozen backbone", "frozen + aug."),
+    "unfrozen_no_aug": ("layer 4 trained", "no aug."),
+    "unfrozen_aug": ("layer 4 trained", "full stack"),
+    "unfrozen_aug_no_blur_noise": ("layer 4 trained", "arm A"),
+    "unfrozen_aug_jitter_gamma": ("layer 4 trained", "arm B"),
+}
+
+
+def transfer_points() -> pd.DataFrame:
+    """Mean and s.d. over seeds of synthetic and real E_R for every configuration."""
+    heads = pd.read_csv(RESULTS_DIR / "revision" / "frozen_heads.csv")
+    heads["config"] = heads["name"].str.replace(r"_seed\d+$", "", regex=True)
+    heads = heads[heads["config"].isin(TRANSFER_HEADS)]
+    heads = heads.assign(family="frozen backbone", config=heads["config"].map(TRANSFER_HEADS))
+
+    arms = pd.concat(
+        [
+            pd.read_csv(RESULTS_DIR / "results_2x2.csv"),
+            pd.read_csv(RESULTS_DIR / "revision" / "frozen_aug_seeds43_44.csv"),
+            pd.read_csv(RESULTS_DIR / "revision" / "arm_a_no_blur_noise.csv"),
+            pd.read_csv(RESULTS_DIR / "revision" / "arm_b_jitter_gamma_erasing.csv"),
+        ]
+    )
+    arms = arms[arms["arm"].isin(TRANSFER_ARMS)]
+    arms = arms.assign(
+        family=arms["arm"].map(lambda a: TRANSFER_ARMS[a][0]),
+        config=arms["arm"].map(lambda a: TRANSFER_ARMS[a][1]),
+    )
+
+    runs = pd.concat([heads, arms])[["family", "config", "seed", "domain", "rotation"]]
+    stats = runs.groupby(["family", "config", "domain"])["rotation"].agg(["mean", "std", "count"]).reset_index()
+    synthetic = stats[stats["domain"] == "synthetic"].set_index(["family", "config"])
+    real = stats[stats["domain"] != "synthetic"]
+    points = real.join(synthetic[["mean", "std"]].rename(columns=lambda c: f"synthetic_{c}"), on=["family", "config"])
+    return points.rename(
+        columns={"mean": "real", "std": "real_sd", "count": "seeds", "synthetic_mean": "synthetic", "synthetic_std": "synthetic_sd"}
+    )[["family", "config", "domain", "seeds", "synthetic", "synthetic_sd", "real", "real_sd"]]
+
+
+def figure_transfer(output_dir: Path) -> None:
+    """
+    Synthetic against real rotation error for every configuration: the
+    asymmetric-transfer claim as one picture. Reads only results/, so it needs
+    no data and no GPU.
+    """
+    points = transfer_points()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    points.to_csv(output_dir / "transfer_points.csv", index=False)
+    transfer(
+        points,
+        output_dir / "transfer.png",
+        label_points={
+            "4k, logits": (0, -11),
+            "synthetic BN": (-7, 0),
+            "tuned head": (-7, 0),
+            "frozen + aug.": (0, -11),
+        },
     )
 
 
@@ -282,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
     add_path_arguments(parser)
     add_local_images_argument(parser)
     parser.add_argument("--rotation-error", action="store_true")
+    parser.add_argument("--transfer", action="store_true")
     parser.add_argument("--crops", action="store_true")
     parser.add_argument("--crops-triptych", action="store_true")
     parser.add_argument("--reliability", action="store_true")
@@ -334,7 +410,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not any(
-        (args.rotation_error, args.crops, args.crops_triptych, args.reliability, args.all)
+        (args.rotation_error, args.transfer, args.crops, args.crops_triptych, args.reliability, args.all)
     ):
         parser.error("nothing to do; pass --all or one of the figure flags")
 
@@ -345,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.all or args.rotation_error:
         figure_rotation_error(output_dir)
+    if args.all or args.transfer:
+        figure_transfer(output_dir)
     if args.all or args.crops:
         figure_crops(paths, output_dir, args.samples, args.seed, args.local_images)
     if args.all or args.crops_triptych:
