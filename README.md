@@ -460,6 +460,12 @@ python scripts/rotation_errors.py --records <predictions>/*.pkl \
 python scripts/coverage_by_range.py --records <predictions>/*.pkl \
     control_unfrozen_aug_seed42=<control>/unfrozen_aug_seed42.pkl
 python scripts/make_figures.py --transfer     # results/ only
+
+# Figure 2 over three seeds (mean curve, min-max band), and coverage by range bin
+python scripts/make_figures.py --reliability --pool-seeds --reliability-metrics rotation \
+    --arms unfrozen_no_aug_seed42 unfrozen_no_aug_seed43 unfrozen_no_aug_seed44
+python scripts/make_figures.py --range-coverage \
+    --arms unfrozen_no_aug_seed42 unfrozen_no_aug_seed43 unfrozen_no_aug_seed44   # results/ only
 ```
 
 ## Repository layout
