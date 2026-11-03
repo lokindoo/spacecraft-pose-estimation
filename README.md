@@ -10,7 +10,19 @@ the direction you augmented, and the model's confidence gives no warning.
 Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark.*
 Sim2Science: ML with Imperfect Scientific Models, workshop at NeurIPS 2026.
 
-<!-- TODO before release: add badges once arXiv and HuggingFace are live.
+| Version | Code and results | Paper source |
+|---|---|---|
+| Sim2Science 2026, camera-ready | tag [`sim2science-2026-camera-ready`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026-camera-ready) | [`paper/sim2science-2026/`](paper/sim2science-2026/) |
+| Sim2Science 2026, as first submitted | tag [`sim2science-2026`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026) | |
+| Extended version (arXiv) | in preparation; it will get its own tag | |
+
+`main` moves on with the extended version; the tags stay fixed. Every number in
+the camera-ready is checked against [`results/`](results/) by
+[`paper/sim2science-2026/check_numbers.py`](paper/sim2science-2026/check_numbers.py),
+and the predictions behind the post-review experiments are in
+[`preregistration/`](preregistration/).
+
+<!-- TODO before release: add badges once arXiv and the weights are live.
      [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
      [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-checkpoints-yellow)](https://huggingface.co/TODO)
      [![PWC](https://img.shields.io/badge/PapersWithCode-SPEED+-21CBCE)](https://paperswithcode.com/dataset/speed) -->
@@ -345,7 +357,8 @@ It re-runs inference for all eight arms, rebuilds Table 1, and diffs it against
 
 > **The weights are not uploaded yet**; see [model_card.md](model_card.md).
 > Until they are, this path needs checkpoints you trained yourself, and
-> `results/checkpoints.json` records which run each published row came from.
+> `results/checkpoints.json` records which run each published row came from,
+> with each file's sha256.
 > Everything else reproduces from this repository alone: the results CSVs, the
 > conformal analysis, the constant-pose baseline, and both paper figures.
 
@@ -384,6 +397,22 @@ python scripts/make_figures.py --reliability --arms unfrozen_no_aug_seed42 \
 > by design, and which is why the unfrozen arms are run three times.
 
 Add `--smoke` to `train.py` for a two-minute CPU wiring check on 32 images.
+
+### 6. From the paper to the code
+
+For the camera-ready. Every row reads only `results/` unless it says otherwise,
+and `paper/sim2science-2026/check_numbers.py` checks all of them at once.
+
+| In the paper | Data | Made by |
+|---|---|---|
+| Table 1 | `results_2x2.csv`, `revision/frozen_aug_seeds43_44.csv` | `scripts/evaluate.py` per run; `scripts/reproduce_table.py` re-checks it from the checkpoints |
+| Fig. 1, augmented and real crops with intensity densities | SPEED+ images | `scripts/make_figures.py --crops-triptych` (command above) |
+| Fig. 2, reliability | prediction records | `scripts/make_figures.py --reliability` (command above) |
+| App. A, per-seed results | as Table 1 | as Table 1 |
+| App. B, conformal coverage | `conformal_coverage.csv`, `revision/conformal_frozen_aug.csv` | `scripts/run_conformal.py` |
+| App. C, constant-pose baseline | `constant_baseline.csv` | `scripts/constant_baseline.py` (labels only) |
+| App. D, revision experiments | `revision/` | the commands under [Revision experiments](#revision-experiments); the appendix text and tables by `paper/sim2science-2026/make_revision_appendix.py` |
+| Any per-image analysis | `predictions/` | `scripts/export_predictions.py`; see [`results/README.md`](results/README.md#predictions) |
 
 ## Revision experiments
 
@@ -439,7 +468,10 @@ src/speedplus_pose/
   image_stats.py    gradient, edge and clipping statistics
 scripts/            one job each; reproduce_table.py is the important one
 results/            the published numbers, as CSV, plus checkpoints.json;
-                    results/revision/ holds the post-review experiments
+                    results/revision/ holds the post-review experiments,
+                    results/predictions/ every image's predicted pose
+paper/              each paper version's LaTeX source and number ledger
+preregistration/    predictions and decision rules, committed before results
 notebooks/          three curated notebooks (see notebooks/README.md)
 tests/              74 tests; the conformal ones include coverage simulations
 ```

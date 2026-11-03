@@ -8,9 +8,12 @@
     "real-domain measurement informs the choice - lightbox and sunlamp are touched",
     "once, at evaluation, and never for selection.",
     "",
-    "TODO before release: fill in `huggingface` with the uploaded path and `sha256`",
-    "with the hash of each file, so a reproducer can verify they have the same",
-    "weights. Compute with: python -c \"import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())\" <ckpt>"
+    "`revision_runs` holds the post-review runs (results/revision/), selected by the",
+    "same rule: the frozen augmented seeds 43 and 44 in Table 1, ablation arms A and",
+    "B, and the control. Scripts that loop over checkpoints read `arms` only.",
+    "",
+    "`sha256` lets a reproducer check they have the same weights. TODO once the",
+    "weights are uploaded: fill in the download location."
   ],
   "study": "Unreasonable Confidence from Simulator Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark",
   "selection_metric": "synthetic validation rotation error",
@@ -20,57 +23,148 @@
       "seed": 42,
       "checkpoint": "1-frozen_no_aug_checkpoint_20260716_0245.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "72e803911d84cf8b56e2754af0c09a9f919a7942020a07e6df3b60d91a89a113",
+      "hardware": "Colab"
     },
     "frozen_aug_seed42": {
       "config": "frozen_aug",
       "seed": 42,
       "checkpoint": "2-frozen_aug_checkpoint_20260719_2026.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "9076c74507f3dd27e106063c6523053783953f1adac2c5dd1bd81c867361be87",
+      "hardware": "Colab"
     },
     "unfrozen_no_aug_seed42": {
       "config": "unfrozen_no_aug",
       "seed": 42,
       "checkpoint": "3-unfrozen_no_aug_seed_0_checkpoint_20260720_1841.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "61b914c716e8c54d9e687447be35780dc98c2f83d9bf3d66950dde958fd3f285",
+      "hardware": "Colab"
     },
     "unfrozen_no_aug_seed43": {
       "config": "unfrozen_no_aug",
       "seed": 43,
       "checkpoint": "4-unfrozen_no_aug_seed_1_checkpoint_20260726_1845.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "d3c155aac53ebe65cdee999b3dc6cf511dc5fdb423f00043fbc638c8589a0f04",
+      "hardware": "Colab"
     },
     "unfrozen_no_aug_seed44": {
       "config": "unfrozen_no_aug",
       "seed": 44,
       "checkpoint": "5-unfrozen_no_aug_seed_2_checkpoint_20260726_2133.pt",
       "huggingface": null,
-      "sha256": null,
-      "note": "Predates the code that stored the translation normalisation constants; normalisation.constants_for_checkpoint recomputes them from the training subset for this arm."
+      "sha256": "2aaef9a97b7ca4ee7f7fb355e97e0a5d54377878373558b93320feea3ba9e3c2",
+      "note": "Predates the code that stored the translation normalisation constants; normalisation.constants_for_checkpoint recomputes them from the training subset for this arm.",
+      "hardware": "Colab"
     },
     "unfrozen_aug_seed42": {
       "config": "unfrozen_aug",
       "seed": 42,
       "checkpoint": "6-unfrozen_aug_seed_0_checkpoint_20260723_1342.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "5ce339d2376cee1fb5978b8c9b7f1bd08f0d6284e4a9b0bec7a0d88cdd289457",
+      "hardware": "Colab"
     },
     "unfrozen_aug_seed43": {
       "config": "unfrozen_aug",
       "seed": 43,
       "checkpoint": "7-unfrozen_aug_seed_1_checkpoint_20260727_0310.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "fbede89ecce80d5fa1b1b452a6e9097a932cc5c13cc6025fcec73a40bf571a9c",
+      "hardware": "Colab"
     },
     "unfrozen_aug_seed44": {
       "config": "unfrozen_aug",
       "seed": 44,
       "checkpoint": "8-unfrozen_aug_seed_2_checkpoint_20260727_0501.pt",
       "huggingface": null,
-      "sha256": null
+      "sha256": "c64965ea546214199e032b1e16cca332700a729ab771803a8d0a28fd07147046",
+      "hardware": "Colab"
+    }
+  },
+  "revision_runs": {
+    "frozen_aug_seed43": {
+      "config": "frozen_aug",
+      "seed": 43,
+      "checkpoint": "frozen_aug_seed43/checkpoint_20261029_145040_e20.pt",
+      "selected_epoch": 20,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "a984ce1502cd83ba81620dad45eb3b68ef49efb4bc5df68ae45ef98f1559f324"
+    },
+    "frozen_aug_seed44": {
+      "config": "frozen_aug",
+      "seed": 44,
+      "checkpoint": "frozen_aug_seed44/checkpoint_20261029_174903_e18.pt",
+      "selected_epoch": 18,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "b2d193489896c32b03d1b04f2924753a188304436b224963c643271e50116aeb"
+    },
+    "unfrozen_aug_no_blur_noise_seed42": {
+      "config": "unfrozen_aug_no_blur_noise",
+      "seed": 42,
+      "checkpoint": "unfrozen_aug_no_blur_noise_seed42/checkpoint_20261027_223147_e18.pt",
+      "selected_epoch": 18,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "87268985473dd21e2b23f46ea8421b8eac08d6a7498f22fd88ca4fb74a4d0e49"
+    },
+    "unfrozen_aug_no_blur_noise_seed43": {
+      "config": "unfrozen_aug_no_blur_noise",
+      "seed": 43,
+      "checkpoint": "unfrozen_aug_no_blur_noise_seed43/checkpoint_20261028_114125_e20.pt",
+      "selected_epoch": 20,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "12ea4b5aa088fd6328f5b8417326715fcf68c43df6ea4207af404b55c10bdc47"
+    },
+    "unfrozen_aug_no_blur_noise_seed44": {
+      "config": "unfrozen_aug_no_blur_noise",
+      "seed": 44,
+      "checkpoint": "unfrozen_aug_no_blur_noise_seed44/checkpoint_20261028_145733_e16.pt",
+      "selected_epoch": 16,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "89a0f3e27d2440c7fd8b9fd8bc9e1f9e8aa0d124c20a338275f816c4954739d8"
+    },
+    "unfrozen_aug_jitter_gamma_seed42": {
+      "config": "unfrozen_aug_jitter_gamma",
+      "seed": 42,
+      "checkpoint": "unfrozen_aug_jitter_gamma_seed42/checkpoint_20261029_000723_e20.pt",
+      "selected_epoch": 20,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "c8a3766fb24ef28aa50bb142f80176a819d32bd1672bf822b73a3fc85f90f85d"
+    },
+    "unfrozen_aug_jitter_gamma_seed43": {
+      "config": "unfrozen_aug_jitter_gamma",
+      "seed": 43,
+      "checkpoint": "unfrozen_aug_jitter_gamma_seed43/checkpoint_20261029_040159_e20.pt",
+      "selected_epoch": 20,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "7040964dd23b91ebd457dbb9d2e954b2e84c5150372e78b9e1d709b500a08a8c"
+    },
+    "unfrozen_aug_jitter_gamma_seed44": {
+      "config": "unfrozen_aug_jitter_gamma",
+      "seed": 44,
+      "checkpoint": "unfrozen_aug_jitter_gamma_seed44/checkpoint_20261029_073101_e18.pt",
+      "selected_epoch": 18,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "3e6ba59acd29c6e7eb6d77701c305216f939c4761679790ff745ccb642e7bb17"
+    },
+    "control_unfrozen_aug_seed42": {
+      "config": "unfrozen_aug",
+      "seed": 42,
+      "checkpoint": "unfrozen_aug_seed42/checkpoint_20261028_200500_e20.pt",
+      "selected_epoch": 20,
+      "hardware": "Apple M5",
+      "huggingface": null,
+      "sha256": "103be4b9db4ad8c47922e92b1a4eddb3d839df986030fe4bf552bd9b164d12a0"
     }
   }
 }

@@ -53,8 +53,10 @@ model-index:
 # SPEED+ Pose Estimator — sim-to-real study checkpoints
 
 Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
-SPEED+ imagery: the eight checkpoints behind a study of what transfers across
-the synthetic-to-real gap.
+SPEED+ imagery: the checkpoints behind a study of what transfers across the
+synthetic-to-real gap. Eight are the published arms; nine more are the
+post-review runs. `results/checkpoints.json` in the repository lists all
+seventeen with their sha256.
 
 **Not uploaded yet.** This card is written ahead of a release. The study itself reproduces without the
 weights; see the repository.
