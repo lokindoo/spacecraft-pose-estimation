@@ -121,6 +121,7 @@ def reliability(
     path: Path | None = None,
     show_title: bool = False,
     font_scale: float = 1.0,
+    bands: dict[str, dict[str, tuple[np.ndarray, np.ndarray]]] | None = None,
 ):
     """
     Figure 2: nominal against measured coverage. The diagonal is a perfectly
@@ -132,6 +133,9 @@ def reliability(
     paper has no room for two panels that are both legible at column width, so
     the published version passes ("rotation",) alone, and ``font_scale`` enlarges
     every label so the single panel still reads at print size.
+
+    ``bands`` shades a (low, high) envelope under each curve, keyed like
+    ``curves``: the spread over seeds when the curves are their mean.
     """
     sizes = {
         "font.size": 11 * font_scale,
@@ -153,6 +157,9 @@ def reliability(
                     label=DOMAIN_LABELS.get(domain, domain),
                     color=DOMAIN_COLOURS.get(domain),
                 )
+                if bands:
+                    low, high = bands[metric][domain]
+                    ax.fill_between(nominal, low, high, color=DOMAIN_COLOURS.get(domain), alpha=0.2, lw=0)
             ax.set_xlabel("nominal coverage (calibrated on synthetic)")
             ax.set_title(METRIC_LABELS.get(metric, metric))
             ax.grid(alpha=0.3)
@@ -439,5 +446,48 @@ def transfer(
         Line2D([], [], color="black", ls="--", lw=0.9, label="chance level"),
     ]
     figure.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=4, frameon=False, fontsize=8)
+    figure.tight_layout()
+    return _save(figure, path) if path else figure
+
+
+def coverage_by_range(
+    rows: "pd.DataFrame",
+    path: Path | None = None,
+    metrics: tuple[str, ...] = ("translation_metres", "translation_relative", "rotation"),
+    nominal: float = 0.9,
+):
+    """
+    Coverage of the marginal region within each range bin, one panel per score.
+
+    ``rows`` is results/arxiv/coverage_by_range.csv cut to the records to pool:
+    the line is their mean per bin and the band their min-max. Marginal
+    coverage averages over these bins, so a flat line at the dashed nominal
+    level is what conditional calibration would look like; a slope is how far
+    the marginal guarantee hides range dependence.
+    """
+    bins = rows.drop_duplicates("bin").sort_values("bin")
+    labels = [
+        f"<{r.range_high:.1f}" if np.isinf(r.range_low) else (f">{r.range_low:.1f}" if np.isinf(r.range_high) else f"{r.range_low:.1f}-{r.range_high:.1f}")
+        for r in bins.itertuples()
+    ]
+    x = np.arange(len(labels))
+    figure, axes = plt.subplots(1, len(metrics), figsize=(3.2 * len(metrics), 2.9), sharey=True, squeeze=False)
+    for ax, metric in zip(axes[0], metrics):
+        for domain in ("in_domain_test", "lightbox", "sunlamp"):
+            g = rows[(rows["metric"] == metric) & (rows["domain"] == domain)].groupby("bin")["coverage"]
+            mean, low, high = g.mean().to_numpy(), g.min().to_numpy(), g.max().to_numpy()
+            colour = DOMAIN_COLOURS[domain]
+            ax.plot(x, mean, "o-", lw=1.6, ms=4, color=colour, label=DOMAIN_LABELS[domain])
+            ax.fill_between(x, low, high, color=colour, alpha=0.2, lw=0)
+        ax.axhline(nominal, color="k", ls="--", lw=1)
+        ax.set_title(METRIC_LABELS.get(metric, metric), fontsize=10)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=30, fontsize=8)
+        ax.set_xlabel("range bin [m]")
+        ax.set_ylim(0, 1.02)
+        ax.grid(alpha=0.25)
+    axes[0][0].set_ylabel("coverage")
+    handles, legend_labels = axes[0][0].get_legend_handles_labels()
+    figure.legend(handles, legend_labels, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=3, frameon=False, fontsize=9)
     figure.tight_layout()
     return _save(figure, path) if path else figure

@@ -8,7 +8,11 @@ Regenerate the paper's figures.
                      lightbox, sunlamp) with an intensity-histogram strip
                      underneath. Needs the prepared image subsets.
   --reliability      Figure 2: conformal reliability curves. Needs the
-                     prediction records from scripts/evaluate.py.
+                     prediction records from scripts/evaluate.py. With
+                     --pool-seeds, one figure for all --arms: their mean curve
+                     and min-max band (arXiv: three seeds).
+  --range-coverage   arXiv: coverage of the marginal region by range bin,
+                     pooled over --arms. Reads results/arxiv/ only.
   --transfer         arXiv: synthetic against real rotation error, one point
                      per configuration (frozen-backbone heads and layer-4
                      arms). Reads results/ only, like --rotation-error.
@@ -49,6 +53,7 @@ two it replaced, so legibility does not need the extra scale.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -62,6 +67,7 @@ from speedplus_pose.coverage import scores_from_record, sweep_reliability
 from speedplus_pose.evaluate import load_predictions
 from speedplus_pose.experiment import build_dataset
 from speedplus_pose.figures import (
+    coverage_by_range,
     crops_with_histograms,
     image_grid,
     reliability,
@@ -352,12 +358,48 @@ def figure_reliability(
         )
 
 
+def figure_reliability_pooled(
+    paths, output_dir: Path, arms: list[str], metrics: tuple[str, ...], font_scale: float, name: str
+) -> None:
+    """Figure 2 over several seeds of one arm: mean curve, min-max band."""
+    alphas = np.round(np.arange(0.01, 0.51, 0.01), 2)
+    plot_domains = ("in_domain_test", "sunlamp", "lightbox")
+    per_arm = []
+    for arm in arms:
+        records = load_predictions(paths.predictions / f"{arm}.pkl")
+        scores = {split: scores_from_record(records[split]) for split in ("calibration", *plot_domains)}
+        per_arm.append({
+            metric: sweep_reliability(scores["calibration"], {d: scores[d] for d in plot_domains}, metric, alphas)
+            for metric in metrics
+        })
+    curves = {m: {d: np.mean([a[m][d] for a in per_arm], axis=0) for d in plot_domains} for m in metrics}
+    bands = {m: {d: (np.min([a[m][d] for a in per_arm], axis=0), np.max([a[m][d] for a in per_arm], axis=0))
+                 for d in plot_domains} for m in metrics}
+    suffix = "_rotation" if metrics == ("rotation",) else ""
+    reliability(
+        1 - alphas, curves, name, metrics=metrics, font_scale=font_scale, bands=bands,
+        path=output_dir / f"reliability_{name}{suffix}.png",
+    )
+
+
+def figure_range_coverage(output_dir: Path, arms: list[str], name: str) -> None:
+    rows = pd.read_csv(RESULTS_DIR / "arxiv" / "coverage_by_range.csv")
+    rows = rows[rows["record"].isin(arms)]
+    missing = set(arms) - set(rows["record"])
+    if missing:
+        raise SystemExit(f"not in coverage_by_range.csv: {sorted(missing)}")
+    coverage_by_range(rows, output_dir / f"coverage_by_range_{name}.png")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_path_arguments(parser)
     add_local_images_argument(parser)
     parser.add_argument("--rotation-error", action="store_true")
     parser.add_argument("--transfer", action="store_true")
+    parser.add_argument("--range-coverage", action="store_true")
+    parser.add_argument("--pool-seeds", action="store_true", help="With --reliability: one figure over all --arms")
+    parser.add_argument("--name", default=None, help="File-name stem for pooled figures (default: the first arm without its seed)")
     parser.add_argument("--crops", action="store_true")
     parser.add_argument("--crops-triptych", action="store_true")
     parser.add_argument("--reliability", action="store_true")
@@ -410,7 +452,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not any(
-        (args.rotation_error, args.transfer, args.crops, args.crops_triptych, args.reliability, args.all)
+        (args.rotation_error, args.transfer, args.range_coverage, args.crops, args.crops_triptych, args.reliability, args.all)
     ):
         parser.error("nothing to do; pass --all or one of the figure flags")
 
@@ -441,9 +483,17 @@ def main(argv: list[str] | None = None) -> int:
             args.triptych_suffix,
         )
     if args.all or args.reliability:
-        figure_reliability(
-            paths, output_dir, args.arms, tuple(args.reliability_metrics), args.font_scale
-        )
+        if args.pool_seeds:
+            name = args.name or re.sub(r"_seed\d+$", "", args.arms[0]) + "_seeds"
+            figure_reliability_pooled(
+                paths, output_dir, args.arms, tuple(args.reliability_metrics), args.font_scale, name
+            )
+        else:
+            figure_reliability(
+                paths, output_dir, args.arms, tuple(args.reliability_metrics), args.font_scale
+            )
+    if args.range_coverage:
+        figure_range_coverage(output_dir, args.arms, args.name or re.sub(r"_seed\d+$", "", args.arms[0]))
 
     print(
         "\nNote: the published Figure 2 had its title cropped out for the "
