@@ -337,6 +337,11 @@ pip install -e .
 pytest tests            # 80 tests, no data required
 ```
 
+`requirements.txt` pins the versions the pipeline was written against. The
+post-review runs used a newer environment (Python 3.14.8, PyTorch 2.14.1,
+torchvision 0.29.1), frozen in `requirements-m5.txt`; the Colab runs' versions
+were not recorded.
+
 ### 3. Build the subsets
 
 ```bash
