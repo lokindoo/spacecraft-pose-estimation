@@ -4,6 +4,7 @@ BatchNorm re-estimation, and heads trained on cached features.
 """
 
 import numpy as np
+import pytest
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
@@ -13,6 +14,7 @@ from speedplus_pose.evaluate import summarise
 from speedplus_pose.features import to_logits
 from speedplus_pose.heads import HeadConfig, build_head, head_from_checkpoint, predict_head, subsample, train_head
 from speedplus_pose.normalisation import TranslationNormaliser
+from speedplus_pose.paths import checkpoint_file
 from speedplus_pose.train import TrainingHistory, _prune, _record_save, read_ledger, selected_checkpoint
 
 
@@ -48,6 +50,19 @@ def test_selection_ignores_unsaved_epochs(tmp_path):
     for epoch in (1, 3):
         _save(tmp_path, f"checkpoint_{epoch:02d}.pt", epoch, history)
     assert selected_checkpoint(tmp_path)["epoch"] == 3
+
+
+def test_checkpoint_found_under_its_training_or_published_name(tmp_path):
+    entry = {"checkpoint": "unfrozen_aug_seed42/checkpoint_20261028_200500_e20.pt"}
+    with pytest.raises(FileNotFoundError):
+        checkpoint_file(tmp_path, "control_unfrozen_aug_seed42", entry)
+
+    (tmp_path / "control_unfrozen_aug_seed42.pt").write_bytes(b"x")
+    assert checkpoint_file(tmp_path, "control_unfrozen_aug_seed42", entry).name == "control_unfrozen_aug_seed42.pt"
+
+    (tmp_path / "unfrozen_aug_seed42").mkdir()
+    (tmp_path / entry["checkpoint"]).write_bytes(b"x")
+    assert checkpoint_file(tmp_path, "control_unfrozen_aug_seed42", entry) == tmp_path / entry["checkpoint"]
 
 
 # --- BatchNorm re-estimation -------------------------------------------------

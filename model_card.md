@@ -1,55 +1,3 @@
-<!--
-DRAFT HuggingFace model card.
-
----
-license: apache-2.0
-library_name: pytorch
-pipeline_tag: image-feature-extraction
-tags:
-  - pose-estimation
-  - 6d-pose-estimation
-  - satellite
-  - space
-  - sim-to-real
-  - domain-gap
-  - conformal-prediction
-datasets:
-  - speedplus            # TODO: confirm the dataset's tag/id on the Hub
-metrics:
-  - rotation_error
-  - translation_error
-model-index:
-  - name: speedplus-pose-resnet50
-    results:
-      - task:
-          type: pose-estimation
-          name: 6DoF spacecraft pose estimation
-        dataset:
-          type: speedplus
-          name: "SPEED+ (sunlamp, real HIL)"
-        metrics:
-          - type: rotation_error
-            value: 1.468
-            name: "Geodesic rotation error (rad), layer4+aug, mean over 3 seeds"
-          - type: translation_error
-            value: 0.355
-            name: "Range-normalised translation error, layer4+aug"
-      - task:
-          type: pose-estimation
-          name: 6DoF spacecraft pose estimation
-        dataset:
-          type: speedplus
-          name: "SPEED+ (lightbox, real HIL)"
-        metrics:
-          - type: rotation_error
-            value: 0.987
-            name: "Geodesic rotation error (rad), layer4+aug, mean over 3 seeds"
-          - type: translation_error
-            value: 0.150
-            name: "Range-normalised translation error, layer4+aug"
----
--->
-
 # SPEED+ Pose Estimator — sim-to-real study checkpoints
 
 Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
@@ -58,32 +6,58 @@ synthetic-to-real gap. Eight are the published arms; nine more are the
 post-review runs. `results/checkpoints.json` in the repository lists all
 seventeen with their sha256.
 
-**Not uploaded yet.** This card is written ahead of a release. The study itself reproduces without the
-weights; see the repository.
+The study itself reproduces without the weights; see the repository.
 
 These are not competitive weights. They are the experimental arms of a study,
 and exist so that its table can be regenerated rather than taken on trust.
+
+Weights, on Zenodo:
+https://doi.org/10.5281/zenodo.24140385
 
 Code, configs and the reproduction script:
 https://github.com/lokindoo/spacecraft-pose-estimation
 
 ## Checkpoints
 
-Each file corresponds to exactly one row of the results table. The selection
-rule, applied uniformly, is the checkpoint with the best synthetic validation
-rotation error among those saved on even epochs. No real-domain measurement
-informed the choice.
+The selection rule, applied uniformly, is the checkpoint with the best
+synthetic validation rotation error among those saved on even epochs. No
+real-domain measurement informed the choice.
 
-| File | Backbone | Augmentation | Seed |
-|---|---|---|---|
-| `frozen_no_aug_seed42.pt` | frozen | — | 42 |
-| `frozen_aug_seed42.pt` | frozen | ✓ | 42 |
-| `unfrozen_no_aug_seed42.pt` | layer 4 trainable | — | 42 |
-| `unfrozen_no_aug_seed43.pt` | layer 4 trainable | — | 43 |
-| `unfrozen_no_aug_seed44.pt` | layer 4 trainable | — | 44 |
-| `unfrozen_aug_seed42.pt` | layer 4 trainable | ✓ | 42 |
-| `unfrozen_aug_seed43.pt` | layer 4 trainable | ✓ | 43 |
-| `unfrozen_aug_seed44.pt` | layer 4 trainable | ✓ | 44 |
+`SHA256SUMS`, next to the weights on Zenodo, lists each file's hash. The same
+hashes appear in `results/checkpoints.json`, whose `checkpoint` field gives
+each file's original name from training. The repository's scripts accept
+either name.
+
+### Results table
+
+Ten files, behind the results table below.
+
+| File | Backbone | Augmentation | Seed | Trained on |
+|---|---|---|---|---|
+| `frozen_no_aug_seed42.pt` | frozen | — | 42 | Colab |
+| `frozen_aug_seed42.pt` | frozen | ✓ | 42 | Colab |
+| `frozen_aug_seed43.pt` | frozen | ✓ | 43 | Apple M5 |
+| `frozen_aug_seed44.pt` | frozen | ✓ | 44 | Apple M5 |
+| `unfrozen_no_aug_seed42.pt` | layer 4 trainable | — | 42 | Colab |
+| `unfrozen_no_aug_seed43.pt` | layer 4 trainable | — | 43 | Colab |
+| `unfrozen_no_aug_seed44.pt` | layer 4 trainable | — | 44 | Colab |
+| `unfrozen_aug_seed42.pt` | layer 4 trainable | ✓ | 42 | Colab |
+| `unfrozen_aug_seed43.pt` | layer 4 trainable | ✓ | 43 | Colab |
+| `unfrozen_aug_seed44.pt` | layer 4 trainable | ✓ | 44 | Colab |
+
+### Augmentation ablation
+
+Seven post-review files, all with layer 4 trainable, trained on an Apple M5.
+
+| File | Augmentation | Seed |
+|---|---|---|
+| `unfrozen_aug_no_blur_noise_seed42.pt` | arm A: full stack minus blur and noise | 42 |
+| `unfrozen_aug_no_blur_noise_seed43.pt` | arm A: full stack minus blur and noise | 43 |
+| `unfrozen_aug_no_blur_noise_seed44.pt` | arm A: full stack minus blur and noise | 44 |
+| `unfrozen_aug_jitter_gamma_seed42.pt` | arm B: jitter, gamma and erasing only | 42 |
+| `unfrozen_aug_jitter_gamma_seed43.pt` | arm B: jitter, gamma and erasing only | 43 |
+| `unfrozen_aug_jitter_gamma_seed44.pt` | arm B: jitter, gamma and erasing only | 44 |
+| `control_unfrozen_aug_seed42.pt` | control: full stack, rerun on the ablation's hardware | 42 |
 
 ## Results
 
@@ -139,6 +113,12 @@ half must not, since it is trained raw and unit-normalised. Passing the
 quaternion through the de-normaliser mangles every orientation in a way that
 still looks plausible.
 
+One file stores no constants: `frozen_no_aug_seed42.pt` predates the code that
+saved them, so the example raises `KeyError` on it. Every arm trained on the
+same subset, and the other sixteen files store identical constants; take them
+from any of those. `normalisation.constants_for_checkpoint` recomputes them
+from the SPEED+ training labels instead.
+
 ## Intended use
 
 Intended for research on sim-to-real transfer, domain-gap benchmarking on
@@ -181,6 +161,9 @@ strictly as held-out tests.
 ## Dataset licence
 
 The weights are derived from SPEED+, which is licensed under Creative Commons Attribution 4.0 International.
+
+The ResNet-50 backbone was initialised from torchvision's ImageNet-pretrained
+weights (`IMAGENET1K_V2`), which may carry their own terms.
 
 SPEED+ itself is not redistributed here, in any form.
 

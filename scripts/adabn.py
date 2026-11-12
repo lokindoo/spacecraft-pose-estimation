@@ -56,6 +56,7 @@ from speedplus_pose.experiment import build_dataset, load_split_labels
 from speedplus_pose.labels import translation_normalisation
 from speedplus_pose.model import build_model, resolve_device
 from speedplus_pose.normalisation import TranslationNormaliser, constants_for_checkpoint
+from speedplus_pose.paths import checkpoint_file
 from speedplus_pose.transforms import build_eval_transform
 
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "results"
@@ -112,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.scope == "trained" and not config.model.trainable_stages:
             print(f"  {arm}: frozen backbone, no synthetic-fitted BatchNorm in scope; skipped")
             continue
-        checkpoint = torch.load(Path(args.checkpoint_dir) / entry["checkpoint"], weights_only=False, map_location=device)
+        checkpoint = torch.load(checkpoint_file(args.checkpoint_dir, arm, entry), weights_only=False, map_location=device)
         model = build_model(config.model, device)
         model.load_state_dict(checkpoint["model_state_dict"])
         normaliser = TranslationNormaliser(*constants_for_checkpoint(checkpoint, *fallback, arm), device)

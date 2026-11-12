@@ -63,6 +63,19 @@ def artifacts_root(override: str | os.PathLike | None = None) -> Path:
     return root
 
 
+def checkpoint_file(checkpoint_dir: str | os.PathLike, arm: str, entry: dict) -> Path:
+    """
+    One arm's checkpoint in ``checkpoint_dir``, under either of its two names:
+    the one training gave it (``entry["checkpoint"]`` in results/checkpoints.json)
+    or the published one, ``<arm>.pt``, as the files are named on Zenodo.
+    """
+    directory = Path(checkpoint_dir)
+    for name in (entry["checkpoint"], f"{arm}.pt"):
+        if (directory / name).is_file():
+            return directory / name
+    raise FileNotFoundError(f"{arm}: neither {entry['checkpoint']} nor {arm}.pt in {directory}")
+
+
 class Paths:
     """Resolved locations for one invocation."""
 

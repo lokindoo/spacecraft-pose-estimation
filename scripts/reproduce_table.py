@@ -42,6 +42,7 @@ from speedplus_pose.labels import translation_normalisation
 from speedplus_pose.metrics import CHANCE_LEVEL, skill_retained
 from speedplus_pose.model import build_model, resolve_device
 from speedplus_pose.normalisation import TranslationNormaliser, constants_for_checkpoint
+from speedplus_pose.paths import checkpoint_file
 from speedplus_pose.transforms import build_eval_transform
 
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "results"
@@ -82,9 +83,7 @@ def measured_from_checkpoints(
 
     for arm, entry in manifest["arms"].items():
         config = load_config(entry["config"], entry["seed"])
-        path = checkpoint_dir / entry["checkpoint"]
-        if not path.exists():
-            raise FileNotFoundError(f"{arm}: no checkpoint at {path}")
+        path = checkpoint_file(checkpoint_dir, arm, entry)
 
         print(f"\n{arm}")
         checkpoint = torch.load(path, weights_only=False, map_location=device)
