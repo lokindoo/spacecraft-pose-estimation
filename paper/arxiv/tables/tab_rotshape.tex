@@ -1,0 +1,25 @@
+\begin{table}[ht]
+  \caption{Shape of the rotation errors on the real domains, layer-4 checkpoints. Near-$\pi$: share of errors within 0.3\,rad of $\pi$ (uniform guessing: 0.19). Cone: share of the near-$\pi$ errors' axes within $20^{\circ}$ of their principal axis, in the body and camera frames. A symmetry flip would concentrate the first and an in-plane confusion the second.}
+  \label{tab:rotshape}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{l l c c c cc}
+    \toprule
+    Run & Domain & Median $\Erot$ & Near-$\pi$ & $n_{\pi}$ & Cone, body & Cone, camera \\
+    \midrule
+    layer 4, no aug., 42 & lightbox & 0.92 & 0.051 & 344 & 0.105 & 0.122 \\
+     & sunlamp & 1.31 & 0.086 & 240 & 0.083 & 0.071 \\
+    layer 4, no aug., 43 & lightbox & 0.92 & 0.050 & 339 & 0.198 & 0.112 \\
+     & sunlamp & 1.54 & 0.095 & 265 & 0.132 & 0.068 \\
+    layer 4, no aug., 44 & lightbox & 0.90 & 0.044 & 299 & 0.100 & 0.094 \\
+     & sunlamp & 1.37 & 0.082 & 229 & 0.140 & 0.118 \\
+    layer 4, full stack, 42 & lightbox & 0.74 & 0.027 & 183 & 0.191 & 0.131 \\
+     & sunlamp & 1.50 & 0.090 & 250 & 0.128 & 0.092 \\
+    layer 4, full stack, 43 & lightbox & 0.71 & 0.040 & 270 & 0.163 & 0.144 \\
+     & sunlamp & 1.11 & 0.071 & 198 & 0.192 & 0.096 \\
+    layer 4, full stack, 44 & lightbox & 0.69 & 0.039 & 263 & 0.171 & 0.122 \\
+     & sunlamp & 1.31 & 0.071 & 197 & 0.315 & 0.071 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,18 @@
+\begin{table}[ht]
+  \caption{The photometric stack, in order. Stochastic components apply with $p{=}0.5$. Arm A drops blur and noise, and arm B also drops the glare blob.}
+  \label{tab:augparams}
+  \centering
+  \footnotesize
+  \begin{tabular}{l l c c}
+    \toprule
+    Component & Parameters & Arm A & Arm B \\
+    \midrule
+    Brightness / contrast jitter & factor $[0.65, 1.5]$ / $\pm 0.5$ & \checkmark & \checkmark \\
+    Gamma & log-uniform in $[0.5, 2]$ & \checkmark & \checkmark \\
+    Sun-glare blob ($p{=}0.5$) & clamped Gaussian, $\sigma \in [10, 50]$\,px, peak $[0.8, 2]$ & \checkmark & -- \\
+    Gaussian blur ($p{=}0.5$) & kernel 7, $\sigma \in [0.1, 2]$ & -- & -- \\
+    Additive Gaussian noise ($p{=}0.5$) & $\sigma \in [0.01, 0.08]$ & -- & -- \\
+    Random erasing ($p{=}0.5$) & area $[0.02, 0.06]$ & \checkmark & \checkmark \\
+    \bottomrule
+  \end{tabular}
+\end{table}

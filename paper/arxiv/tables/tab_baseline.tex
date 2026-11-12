@@ -1,0 +1,18 @@
+\begin{table}[ht]
+  \caption{The baseline in sequence: $\Erot$ (rad), on the 2{,}000-image synthetic validation split used everywhere else.}
+  \label{tab:baseline}
+  \centering
+  \small
+  \begin{tabular}{l c cc}
+    \toprule
+    Step & Synthetic (val) & Lightbox & Sunlamp \\
+    \midrule
+    0. 4k images, logits head, MSE on raw quaternions & -- & -- & -- \\
+    1. + labels canonicalised to one hemisphere & 1.666 & 2.002 & 2.073 \\
+    2. + sign-invariant rotation loss & -- & -- & -- \\
+    3. + pooled 2048-d features & -- & -- & -- \\
+    4. + 28k images (published frozen arm, seed 42) & 1.053 & 1.752 & 2.048 \\
+    \bottomrule
+    \multicolumn{4}{@{}l}{\scriptsize Step 0 recorded only its loss, and steps 2 and 3 have no saved score on this split.}\\
+  \end{tabular}
+\end{table}

@@ -1,0 +1,26 @@
+\begin{table}[ht]
+  \caption{Augmentation ablation, $\Erot$ (rad) per seed and paired difference from the published full stack (layer 4, same seed). Last column: sunlamp $\Etrans$.}
+  \label{tab:ablation}
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{l c ccc ccc c}
+    \toprule
+    & & \multicolumn{3}{c}{$\Erot$} & \multicolumn{3}{c}{$\Delta\Erot$ vs.\ full stack} & Sunlamp \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    Arm & Seed & Synth. & Lightbox & Sunlamp & Synth. & Lightbox & Sunlamp & $\Etrans$ \\
+    \midrule
+    full stack & 42 & 0.352 & 0.986 & 1.592 & -- & -- & -- & 0.405 \\
+     & 43 & 0.302 & 0.997 & 1.354 & -- & -- & -- & 0.399 \\
+     & 44 & 0.311 & 0.977 & 1.459 & -- & -- & -- & 0.261 \\
+    \midrule
+    A: no blur/noise & 42 & 0.320 & 1.070 & 1.408 & $-0.032$ & $+0.084$ & $-0.184$ & 0.311 \\
+     & 43 & 0.328 & 1.001 & 1.360 & $+0.026$ & $+0.004$ & $+0.006$ & 0.325 \\
+     & 44 & 0.320 & 1.081 & 1.342 & $+0.009$ & $+0.104$ & $-0.117$ & 0.280 \\
+    \midrule
+    B: jitter, gamma, erasing & 42 & 0.297 & 0.983 & 1.390 & $-0.055$ & $-0.003$ & $-0.202$ & 0.286 \\
+     & 43 & 0.310 & 0.947 & 1.437 & $+0.008$ & $-0.050$ & $+0.083$ & 0.309 \\
+     & 44 & 0.291 & 1.068 & 1.414 & $-0.020$ & $+0.091$ & $-0.045$ & 0.330 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

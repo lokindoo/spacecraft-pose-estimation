@@ -1,0 +1,62 @@
+\section{Constant-predictor baseline}
+\label{app:constant}
+
+The chance level of $\pi/2 + \nicefrac{2}{\pi} \approx 2.207$\,rad assumes orientations drawn
+uniformly from $SO(3)$, which SPEED+ poses are not. This appendix gives the empirical
+counterpart quoted in Section~\ref{sec:setup}: the score of a single fixed pose. It anchors
+``near chance'' to a predictor one could actually build, rather than to an assumption about
+the distribution.
+
+The constant is fitted on the 28{,}000 training labels only. Fitting it on a test domain
+would make it an oracle rather than a baseline, so neither real domain enters the estimate.
+For rotation we take the principal eigenvector of $M = \sum_i \mathbf{q}_i
+\mathbf{q}_i^{\top}$, which minimises chordal distance and is unaffected by the quaternion
+double cover. We then refine it with five Karcher iterations on the sphere: sign-align each
+$\mathbf{q}_i$ to the current mean, log-map into the tangent space, average, and exp-map back.
+The $SO(3)$ geodesic distance is twice the $S^3$ one, so iterating on the sphere targets the
+same minimiser as our reported metric. For translation we take the arithmetic mean of the
+training translations. This gives $\mathbf{q} = (-0.198, 0.034, -0.019, -0.979)$ up to sign
+and $\mathbf{t} = (-0.0001, 0.0026, 6.120)$\,m.
+
+Two caveats belong with the numbers. First, the Karcher steps do not contract sharply here,
+because the training orientations cover most of the sphere, which leaves the Fr\'echet
+functional close to flat and the mean weakly identified. This does not affect the result: the
+chordal and
+Karcher estimates lie $0.022$\,rad apart and agree to $0.001$ on every score in
+Table~\ref{tab:constant}. Second, both estimators minimise \emph{squared} error, whereas we
+report mean unsquared error, whose minimisers are the corresponding geometric medians. The
+scores below are therefore achievable rather than optimal, and they are an upper bound on the
+error of the best constant predictor. We do not claim optimality, and no conclusion in the
+paper needs it.
+
+\begin{table}[ht]
+  \caption{A constant pose fitted on the training split, evaluated on each test
+  domain. $\Etrans$ range-normalised, $\Erot$ in radians. Skill is
+  $2.207 - \Erot$. Reported for the Karcher-refined estimate.}
+  \label{tab:constant}
+  \centering
+  \small
+  \begin{tabular}{l c cc c}
+    \toprule
+    Domain & $n$ & $\Etrans$ & $\Erot$ & Skill \\
+    \midrule
+    synthetic (val) & 2{,}000 & 0.415 & 2.176 & 0.031 \\
+    lightbox & 6{,}740 & 0.367 & 2.203 & 0.005 \\
+    sunlamp & 2{,}791 & 0.372 & 2.199 & 0.009 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The empirical no-skill rotation level therefore sits at most $0.031$\,rad from the uniform
+one on all three domains, and we use $2.207$ in the body. Every trained run behind
+Table~\ref{tab:results} keeps some skill over it, even the weakest, seed 42 of the frozen
+un-augmented arm on sunlamp, which scores $2.048$\,rad and keeps $0.15$\,rad.
+
+Translation is less comfortable, and it is where the second caveat matters most. On sunlamp
+the constant scores $0.372$, which two of the three augmented layer-4 seeds ($0.405$, $0.399$)
+do not beat, while a constant fitted directly to the unsquared metric does better on
+translation, scoring
+$0.330$ on sunlamp, and matches this one on rotation to within $0.001$. We quote the
+Karcher-refined constant throughout, as the workshop version did, because no conclusion
+changes with the tighter one: the same two seeds fail to beat it, and every other comparison
+the paper draws with the constant still holds.

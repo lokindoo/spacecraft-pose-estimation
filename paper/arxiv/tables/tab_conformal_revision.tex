@@ -1,0 +1,27 @@
+\begin{table}[ht]
+  \caption{Rotation coverage (\%) at nominal 90\% for the ablation arms (per seed) and the frozen-backbone heads (range over seeds 42--44), each calibrated on its own predictions. $\hat{q}_R$ in rad.}
+  \label{tab:conformal-revision}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{l c cccc c}
+    \toprule
+    Run & Seed & In-domain test & Synthetic (val) & Lightbox & Sunlamp & $\hat{q}_R$ \\
+    \midrule
+    A: no blur/noise & 42 & 90.5 & 91.1 & 33.2 & 16.0 & 0.558 \\
+     & 43 & 89.2 & 88.8 & 33.9 & 16.8 & 0.538 \\
+     & 44 & 90.4 & 90.5 & 31.8 & 18.7 & 0.540 \\
+    \midrule
+    B: jitter, gamma, erasing & 42 & 89.7 & 89.0 & 30.7 & 14.5 & 0.478 \\
+     & 43 & 91.4 & 90.0 & 36.1 & 14.4 & 0.539 \\
+     & 44 & 90.5 & 90.2 & 28.7 & 12.6 & 0.481 \\
+    \midrule
+    heads: 4k, logits & 42--44 & 89.1--92.4 & 89.5--92.2 & 85.3--87.1 & 83.0--85.3 & 2.81--2.86 \\
+    heads: 4k, pooled & 42--44 & 88.5--91.9 & 88.5--92.5 & 77.0--83.2 & 71.0--77.7 & 2.57--2.71 \\
+    heads: 28k, logits & 42--44 & 87.7--91.4 & 89.8--92.0 & 74.3--80.4 & 67.5--76.9 & 2.50--2.67 \\
+    heads: 28k, pooled & 42--44 & 88.7--91.8 & 88.4--92.0 & 63.6--72.2 & 53.4--64.5 & 2.16--2.35 \\
+    heads: tuned & 42--44 & 88.6--90.4 & 89.5--92.0 & 64.1--72.7 & 52.0--61.8 & 2.15--2.31 \\
+    heads: synthetic BN & 42--44 & 89.4--90.1 & 89.3--90.5 & 73.6--77.1 & 72.2--74.2 & 2.64--2.67 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

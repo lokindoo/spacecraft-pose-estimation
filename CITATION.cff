@@ -12,11 +12,27 @@ authors:
     family-names: Dolgov
     affiliation: "Independent Researcher"
     email: "niko.dolgow@gmail.com"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
+    orcid: "https://orcid.org/0009-0000-2699-5315"
 repository-code: "https://github.com/lokindoo/spacecraft-pose-estimation"
 license: Apache-2.0
-version: 1.2.0
-date-released: "2026-11-03"
+version: 1.3.0
+date-released: "2026-11-12"
+# The concept DOI: it resolves to the latest archived release of this repository.
+doi: 10.5281/zenodo.24011140
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24011140
+    description: The code, all archived releases (concept DOI).
+  - type: doi
+    value: 10.5281/zenodo.24011141
+    description: >-
+      The code at tag sim2science-2026-camera-ready, behind the workshop
+      version.
+  - type: doi
+    value: 10.5281/zenodo.24140385
+    description: >-
+      The 17 trained checkpoints, with their model card. Licensed CC BY 4.0,
+      separately from the code.
 keywords:
   - spacecraft pose estimation
   - 6D pose estimation

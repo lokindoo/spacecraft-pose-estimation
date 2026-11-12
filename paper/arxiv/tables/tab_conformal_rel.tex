@@ -1,0 +1,64 @@
+\begin{table}[ht]
+  \caption{Conformal coverage at nominal 90\%, translation scored with the range-normalised error $\Etrans$.}
+  \label{tab:conformal-rel}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{ll c l ccc}
+    \toprule
+    Backbone & Aug. & Seed & Domain & Coverage & $\hat{q}$ (relative) & Infl. \\
+    \midrule
+    frozen & -- & 42 & in-domain test & 89.4 (87.3--91.2) & 0.1189 & 1.01 \\
+    frozen & -- & 42 & synthetic (val) & 89.3 (87.9--90.7) & 0.1189 & 1.03 \\
+    frozen & -- & 42 & lightbox & 49.6 (48.4--50.8) & 0.1189 & 2.42 \\
+    frozen & -- & 42 & sunlamp & 21.7 (20.2--23.3) & 0.1189 & 3.85 \\
+    frozen & -- & 43 & in-domain test & 90.3 (88.3--92.1) & 0.1217 & 0.99 \\
+    frozen & -- & 43 & synthetic (val) & 91.2 (89.9--92.4) & 0.1217 & 0.94 \\
+    frozen & -- & 43 & lightbox & 51.7 (50.5--52.9) & 0.1217 & 2.38 \\
+    frozen & -- & 43 & sunlamp & 23.0 (21.5--24.6) & 0.1217 & 3.94 \\
+    frozen & -- & 44 & in-domain test & 89.9 (87.9--91.7) & 0.1176 & 1.01 \\
+    frozen & -- & 44 & synthetic (val) & 89.4 (88.0--90.7) & 0.1176 & 1.03 \\
+    frozen & -- & 44 & lightbox & 50.6 (49.4--51.8) & 0.1176 & 2.50 \\
+    frozen & -- & 44 & sunlamp & 22.1 (20.5--23.7) & 0.1176 & 3.74 \\
+    \midrule
+    frozen & \checkmark & 42 & in-domain test & 88.9 (86.8--90.8) & 0.1253 & 1.05 \\
+    frozen & \checkmark & 42 & synthetic (val) & 89.6 (88.2--90.9) & 0.1253 & 1.01 \\
+    frozen & \checkmark & 42 & lightbox & 66.2 (65.0--67.3) & 0.1253 & 1.78 \\
+    frozen & \checkmark & 42 & sunlamp & 15.7 (14.3--17.1) & 0.1253 & 4.20 \\
+    frozen & \checkmark & 43 & in-domain test & 86.2 (83.9--88.3) & 0.1259 & 1.10 \\
+    frozen & \checkmark & 43 & synthetic (val) & 88.5 (87.0--89.9) & 0.1259 & 1.04 \\
+    frozen & \checkmark & 43 & lightbox & 61.7 (60.5--62.9) & 0.1259 & 1.94 \\
+    frozen & \checkmark & 43 & sunlamp & 13.4 (12.1--14.7) & 0.1259 & 4.46 \\
+    frozen & \checkmark & 44 & in-domain test & 88.6 (86.5--90.5) & 0.1306 & 1.04 \\
+    frozen & \checkmark & 44 & synthetic (val) & 89.5 (88.1--90.8) & 0.1306 & 1.02 \\
+    frozen & \checkmark & 44 & lightbox & 67.8 (66.7--68.9) & 0.1306 & 1.69 \\
+    frozen & \checkmark & 44 & sunlamp & 19.1 (17.7--20.6) & 0.1306 & 3.82 \\
+    \midrule
+    layer 4 & -- & 42 & in-domain test & 91.0 (89.1--92.7) & 0.0787 & 0.96 \\
+    layer 4 & -- & 42 & synthetic (val) & 90.2 (88.8--91.5) & 0.0787 & 0.99 \\
+    layer 4 & -- & 42 & lightbox & 34.1 (32.9--35.2) & 0.0787 & 6.07 \\
+    layer 4 & -- & 42 & sunlamp & 13.5 (12.2--14.8) & 0.0787 & 6.93 \\
+    layer 4 & -- & 43 & in-domain test & 92.0 (90.1--93.6) & 0.0739 & 0.93 \\
+    layer 4 & -- & 43 & synthetic (val) & 91.3 (90.0--92.5) & 0.0739 & 0.95 \\
+    layer 4 & -- & 43 & lightbox & 35.5 (34.4--36.7) & 0.0739 & 4.70 \\
+    layer 4 & -- & 43 & sunlamp & 9.0 (8.0--10.2) & 0.0739 & 8.07 \\
+    layer 4 & -- & 44 & in-domain test & 89.7 (87.6--91.5) & 0.0678 & 1.01 \\
+    layer 4 & -- & 44 & synthetic (val) & 89.2 (87.8--90.6) & 0.0678 & 1.03 \\
+    layer 4 & -- & 44 & lightbox & 32.2 (31.1--33.3) & 0.0678 & 5.11 \\
+    layer 4 & -- & 44 & sunlamp & 12.0 (10.9--13.3) & 0.0678 & 7.68 \\
+    \midrule
+    layer 4 & \checkmark & 42 & in-domain test & 88.8 (86.7--90.7) & 0.0814 & 1.07 \\
+    layer 4 & \checkmark & 42 & synthetic (val) & 90.5 (89.1--91.7) & 0.0814 & 0.99 \\
+    layer 4 & \checkmark & 42 & lightbox & 43.7 (42.5--44.9) & 0.0814 & 4.58 \\
+    layer 4 & \checkmark & 42 & sunlamp & 5.2 (4.4--6.1) & 0.0814 & 7.99 \\
+    layer 4 & \checkmark & 43 & in-domain test & 90.3 (88.3--92.1) & 0.0911 & 1.00 \\
+    layer 4 & \checkmark & 43 & synthetic (val) & 90.8 (89.5--92.1) & 0.0911 & 0.98 \\
+    layer 4 & \checkmark & 43 & lightbox & 46.3 (45.1--47.5) & 0.0911 & 4.48 \\
+    layer 4 & \checkmark & 43 & sunlamp & 5.7 (4.9--6.6) & 0.0911 & 6.96 \\
+    layer 4 & \checkmark & 44 & in-domain test & 90.5 (88.5--92.2) & 0.0894 & 0.99 \\
+    layer 4 & \checkmark & 44 & synthetic (val) & 91.0 (89.7--92.2) & 0.0894 & 0.97 \\
+    layer 4 & \checkmark & 44 & lightbox & 51.4 (50.2--52.6) & 0.0894 & 3.60 \\
+    layer 4 & \checkmark & 44 & sunlamp & 18.7 (17.2--20.2) & 0.0894 & 5.74 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -14,18 +14,20 @@ Sim2Science: ML with Imperfect Scientific Models, workshop at NeurIPS 2026.
 |---|---|---|
 | Sim2Science 2026, camera-ready | tag [`sim2science-2026-camera-ready`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026-camera-ready) | [`paper/sim2science-2026/`](paper/sim2science-2026/) |
 | Sim2Science 2026, as first submitted | tag [`sim2science-2026`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026) | |
-| Extended version (arXiv) | in preparation; it will get its own tag | |
+| Extended version (arXiv) | tag [`arxiv-v1`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/arxiv-v1) | [`paper/arxiv/`](paper/arxiv/) |
 
 `main` moves on with the extended version; the tags stay fixed. Every number in
-the camera-ready is checked against [`results/`](results/) by
-[`paper/sim2science-2026/check_numbers.py`](paper/sim2science-2026/check_numbers.py),
-and the predictions behind the post-review experiments are in
+each paper is checked against [`results/`](results/) by the `check_numbers.py`
+in its source folder,
+[`paper/sim2science-2026/`](paper/sim2science-2026/check_numbers.py) or
+[`paper/arxiv/`](paper/arxiv/check_numbers.py), and the predictions behind the
+post-review experiments are in
 [`preregistration/`](preregistration/).
 
-<!-- TODO before release: add badges once arXiv and the weights are live.
-     [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
-     [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97-checkpoints-yellow)](https://huggingface.co/TODO)
-     [![PWC](https://img.shields.io/badge/PapersWithCode-SPEED+-21CBCE)](https://paperswithcode.com/dataset/speed) -->
+[![Code DOI](https://img.shields.io/badge/code_DOI-10.5281%2Fzenodo.24011140-blue)](https://doi.org/10.5281/zenodo.24011140)
+[![Weights DOI](https://img.shields.io/badge/weights_DOI-10.5281%2Fzenodo.24140385-blue)](https://doi.org/10.5281/zenodo.24140385)
+<!-- TODO once arXiv is live:
+     [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX) -->
 
 ---
 
@@ -360,10 +362,12 @@ python scripts/reproduce_table.py --from-checkpoints <checkpoint-dir>
 It re-runs inference for all eight arms, rebuilds Table 1, and diffs it against
 `results/results_2x2.csv` row by row, exiting non-zero on any disagreement.
 
-> **The weights are not uploaded yet**; see [model_card.md](model_card.md).
-> Until they are, this path needs checkpoints you trained yourself, and
-> `results/checkpoints.json` records which run each published row came from,
-> with each file's sha256.
+> **The weights are on Zenodo:**
+> [10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385), with
+> their card in [model_card.md](model_card.md). Download them into one
+> directory and pass it as `<checkpoint-dir>`. Their `SHA256SUMS` matches
+> `results/checkpoints.json`, which records which run each published row came
+> from.
 > Everything else reproduces from this repository alone: the results CSVs, the
 > conformal analysis, the constant-pose baseline, and both paper figures.
 
@@ -406,7 +410,9 @@ Add `--smoke` to `train.py` for a two-minute CPU wiring check on 32 images.
 ### 6. From the paper to the code
 
 For the camera-ready. Every row reads only `results/` unless it says otherwise,
-and `paper/sim2science-2026/check_numbers.py` checks all of them at once.
+and `paper/sim2science-2026/check_numbers.py` checks all of them at once. For the
+arXiv version, `paper/arxiv/make_tables.py` writes every table from `results/`
+and `paper/arxiv/check_numbers.py` checks every number.
 
 | In the paper | Data | Made by |
 |---|---|---|
@@ -509,11 +515,13 @@ archives unpack to local disk rather than being read across the mount.
 
 ## Citation
 
-See [CITATION.cff](CITATION.cff). Model weights and their card:
-[model_card.md](model_card.md).
+See [CITATION.cff](CITATION.cff). The model weights are on Zenodo,
+[10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385), with their
+card in [model_card.md](model_card.md).
 
 ## Licence
 
-Code is Apache-2.0 ([LICENSE](LICENSE)). The SPEED+ dataset is licensed
+Code is Apache-2.0 ([LICENSE](LICENSE)). The model weights are CC BY 4.0, as
+derived from SPEED+. The SPEED+ dataset is licensed
 separately by its authors; see the Zenodo record, and note that this repository
 contains no SPEED+ imagery.

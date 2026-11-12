@@ -1,0 +1,28 @@
+\begin{table}[ht]
+  \caption{Coverage (\%) of the marginal 90\% region by range bin (m), rotation, as the mean over the seeds of each arm. Bins are quintiles of the calibration split's range.}
+  \label{tab:rangebins-rotation}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{l l ccccc}
+    \toprule
+    Arm & Domain & $<3.8$ & 3.8--5.3 & 5.3--6.7 & 6.7--8.3 & $\geq8.3$ \\
+    \midrule
+    frozen, no aug. & in-domain & 96.1 & 91.4 & 93.6 & 87.3 & 83.3 \\
+     & lightbox & 75.9 & 74.2 & 71.1 & 69.3 & 64.2 \\
+     & sunlamp & 64.2 & 56.5 & 61.4 & 56.2 & 52.5 \\
+    \midrule
+    frozen, full stack & in-domain & 92.0 & 92.8 & 92.9 & 90.1 & 84.9 \\
+     & lightbox & 78.9 & 78.2 & 76.0 & 73.5 & 71.4 \\
+     & sunlamp & 74.2 & 70.3 & 70.0 & 70.0 & 67.1 \\
+    \midrule
+    layer 4, no aug. & in-domain & 86.0 & 93.9 & 95.0 & 91.7 & 81.8 \\
+     & lightbox & 22.8 & 29.0 & 27.5 & 24.5 & 19.7 \\
+     & sunlamp & 11.1 & 11.6 & 11.3 & 10.3 & 7.1 \\
+    \midrule
+    layer 4, full stack & in-domain & 86.2 & 95.5 & 95.4 & 92.8 & 87.7 \\
+     & lightbox & 35.6 & 40.9 & 38.3 & 34.5 & 29.5 \\
+     & sunlamp & 17.3 & 17.7 & 16.8 & 11.0 & 9.3 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

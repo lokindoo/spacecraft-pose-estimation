@@ -1,0 +1,18 @@
+\begin{table}[ht]
+  \caption{Frozen backbone with augmentation, $\Erot$ (rad) per seed and paired difference from the head-only retrain without augmentation (same seed).}
+  \label{tab:frozenaug}
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{c ccc ccc}
+    \toprule
+    & \multicolumn{3}{c}{$\Erot$} & \multicolumn{3}{c}{$\Delta\Erot$ vs.\ no augmentation} \\
+    \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+    Seed & Synth. & Lightbox & Sunlamp & Synth. & Lightbox & Sunlamp \\
+    \midrule
+    42 & 1.180 & 1.718 & 1.864 & $+0.169$ & $-0.029$ & $-0.128$ \\
+    43 & 1.205 & 1.734 & 1.883 & $+0.161$ & $-0.012$ & $-0.069$ \\
+    44 & 1.169 & 1.673 & 1.881 & $+0.134$ & $-0.117$ & $-0.132$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}

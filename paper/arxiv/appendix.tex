@@ -1,0 +1,173 @@
+% Appendices of the arXiv version. Tables come from tables/ (make_tables.py);
+% App. C and App. D's text are ported from the camera-ready.
+
+\section{Per-seed results}
+\label{app:perseed}
+
+Table~\ref{tab:perseed} lists every run behind Table~\ref{tab:results}: all 36
+arm\,$\times$\,seed\,$\times$\,domain evaluations, with the hardware each run was trained on.
+Seed 42 of the frozen un-augmented arm was trained end to end, and seeds 43 and 44 retrain its
+head on cached features. With the backbone frozen and the inputs un-augmented, the head sees
+the same features either way, and the published seed-42 head reproduces its errors on the
+cache to within $0.0005$ (App.~\ref{app:revision}). Table~\ref{tab:frozen} instead retrains the
+head for all three seeds, so its row for the same configuration differs slightly from this
+arm's mean, and the body quotes Table~\ref{tab:frozen} because its comparisons are made there.
+Each run
+keeps the checkpoint with the best \emph{synthetic} validation rotation error, chosen without
+reference to either real domain.
+
+\input{tables/tab_perseed}
+
+\section{Conformal coverage, all arms and domains}
+\label{app:conformal}
+
+Split-conformal regions are calibrated per arm on 1{,}000 held-out synthetic images, used
+neither for training nor for checkpoint selection, at nominal 90\% coverage with the
+finite-sample-corrected quantile. Coverage carries Clopper--Pearson 95\%
+intervals~\citep{clopper1934use}. $\hat{q}$ is the calibrated region size: a keep-out sphere
+radius for translation, a cone half-angle for rotation. \emph{Inflation} is the factor by which
+$\hat{q}$ would have to grow to restore 90\% coverage on a domain, so it measures directly how
+wrong the calibration is. It sits near $1$ in-domain and reaches $1.2$--$13\times$ on the real
+domains, worst on the sharper layer-4 arms. A low factor on the frozen arms is not good news:
+their cones are already too wide in-domain to be informative. There are two kinds of
+in-domain row: \emph{in-domain test} rows are a further 1{,}000 fresh synthetic images, and
+\emph{Synthetic (val)} rows are the 2{,}000-image validation split used for checkpoint
+selection, kept as a second in-domain control that is not fully independent.\footnote{The camera-ready labelled
+these two ``synthetic (val)'' and ``synthetic (selection split)''.}
+
+Table~\ref{tab:conformal-abs} uses absolute scores: Euclidean metres for translation, geodesic
+radians for rotation. Table~\ref{tab:conformal-rel} repeats the translation analysis under the
+range-normalised score. Table~\ref{tab:conformal-revision} gives rotation coverage for the
+ablation arms and for every frozen-backbone head.
+
+\input{tables/tab_conformal_abs}
+\input{tables/tab_conformal_rel}
+\input{tables/tab_conformal_revision}
+
+\input{appendix_constant}
+
+\input{appendix_revision_text}
+
+\section{Rotation-error shape}
+\label{app:rotshape}
+
+For each layer-4 checkpoint and real domain we measure two things, both pre-registered
+(App.~\ref{app:prereg}). The first is the share of rotation errors within 0.3\,rad of $\pi$.
+Under uniform guessing the angle density, $(1-\cos\theta)/\pi$, rises towards $\pi$, so chance
+alone puts 0.19 of the mass there. The second is how concentrated the axes of those near-$\pi$
+errors are, in the body frame ($R_\mathrm{true}^{\top} R_\mathrm{pred}$) and in the camera
+frame ($R_\mathrm{pred} R_\mathrm{true}^{\top}$). We measure it as the share of axes within
+$20^{\circ}$ of their principal axis, the leading eigenvector of the axes' second-moment
+matrix. A flip about a near-symmetry axis would concentrate the body-frame axes, whereas an
+in-plane confusion about the boresight would concentrate the camera-frame ones. Because the principal
+axis is estimated from the same sample, the share's chance level is not the 0.06 of a fixed
+axis. Simulation with uniform random axes gives 0.074--0.079 at these sample sizes (95th
+percentile about 0.10).
+
+\input{tables/tab_rotshape}
+
+\section{Coverage by range bin}
+\label{app:range}
+
+For each run we calibrate $\hat{q}$ on the calibration split exactly as in
+Sec.~\ref{sec:conformal}, hold it fixed, and measure coverage within five range bins. The bin
+edges are quintiles of the calibration split's range, so no test image shapes them. In-domain
+bins hold 173--234 images each, and the per-bin counts sum to the marginal coverage on every
+run. Tables~\ref{tab:rangebins-translation-metres}, \ref{tab:rangebins-translation-relative}
+and~\ref{tab:rangebins-rotation} give each arm's coverage per bin, averaged over its seeds, for
+the metre sphere, the range-normalised sphere and the attitude cone.
+
+\input{tables/tab_rangebins_translation_metres}
+\input{tables/tab_rangebins_translation_relative}
+\input{tables/tab_rangebins_rotation}
+
+\section{Reproducibility}
+\label{app:repro}
+
+\paragraph{Code, results and predictions.} Everything is in the public repository,
+\url{https://github.com/lokindoo/spacecraft-pose-estimation}. The tag \texttt{arxiv-v1}
+reproduces this version, and the tag \texttt{sim2science-2026-camera-ready} the workshop
+version. Zenodo archives every tag under
+\href{https://doi.org/10.5281/zenodo.24011140}{doi:10.5281/zenodo.24011140}, which lists each
+version, and the workshop version alone under
+\href{https://doi.org/10.5281/zenodo.24011141}{doi:10.5281/zenodo.24011141}. Each tag holds its
+paper's source, with a script that checks every number in the paper against the repository's
+\texttt{results/}. Per-image predictions for all 20 runs
+behind the tables are released as CSV, so a new metric needs neither the data pipeline nor a
+GPU.
+
+\paragraph{Runs.} Configurations, seeds and the selection rule are as in
+Sec.~\ref{sec:setup}. The eight published runs (seed 42 of both frozen arms, and all six
+layer-4 runs) were trained on a free-tier Colab GPU. Frozen augmented seeds 43 and 44,
+ablation arms A and B (three seeds each) and the control were trained with the released
+package on an Apple M5 GPU. The frozen-backbone heads were trained on cached features on the
+same machine's CPU, in minutes each.
+On Colab a 20-epoch run took about 1.8\,h for the frozen un-augmented arm and 2.0--2.3\,h for
+the layer-4 un-augmented arm. With augmentation, epochs took about 790\,s, some 4.4\,h per
+run, whether or not the backbone was frozen. On the M5 most runs took 3.1--4.2\,h, and two
+arm-A runs took about 14\,h of wall-clock time. A head on cached features trains in about
+2.5 minutes.
+
+\paragraph{Checkpoints.} \texttt{results/checkpoints.json} records, for each of the 17 trained
+checkpoints, its configuration, seed, selected epoch, hardware and sha256. The weights are on
+Zenodo with a model card, under CC~BY~4.0:
+\href{https://doi.org/10.5281/zenodo.24140385}{doi:10.5281/zenodo.24140385}.
+
+\paragraph{Software.} \texttt{requirements.txt} pins the versions the pipeline was written
+against (PyTorch 2.13.0, torchvision 0.28.0). The M5 runs used Python 3.14.8, PyTorch 2.14.1
+and torchvision 0.29.1, frozen in \texttt{requirements-m5.txt}. The Colab runs used the Colab
+image of July 2026, whose versions were not recorded. The control rerun
+(Sec.~\ref{sec:directional}) bounds what hardware and software together moved seed 42, and
+none of the 81 unit tests needs data.
+
+\section{Pre-registration record}
+\label{app:prereg}
+
+Every experiment added after review had its prediction and decision rule committed to version
+control before its result was opened. The two files are published verbatim in the
+repository's \texttt{preregistration/}, with every later edit and its time. The revision
+predictions were committed on 28 Oct 2026 at 17:42 UTC. The extension's decision rules
+followed on 30 Oct at 11:31 and its predictions at 11:54, and its results were opened at 13:36
+the same day. These are commit times in the author's own repository, not a third-party
+registration.
+
+\begin{table}[ht]
+  \caption{Pre-registered decision rules and their outcomes. Differences are paired by
+  seed and given in rad, and ``3/3'' means all three seeds share the sign.}
+  \label{tab:prereg}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{p{0.2\linewidth} p{0.38\linewidth} p{0.36\linewidth}}
+    \toprule
+    Experiment & Rule & Outcome \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Revision (locked 28 Oct)}} \\
+    Arm A & Sunlamp, A $-$ full stack, 3/3 negative: keep ``blur and noise work against sunlamp outright'' & 2/3 ($-0.184$, $+0.006$, $-0.117$): softened to a hypothesis \\
+    Arm B & Sunlamp, B $-$ A, 3/3 negative: the glare sentence gains evidence & 1/3 ($-0.018$, $+0.077$, $+0.072$): softened \\
+    Control & Within 2 s.d.\ of published seed 42 on both real domains & Lightbox $+0.006$ ($\pm0.020$), sunlamp $-0.142$ ($\pm0.239$): inside; pairing holds \\
+    Frozen seeds & Sunlamp s.d.\ $\geq 0.025$: ``only 0.03\,rad'' becomes ``no detectable change'' & s.d.\ 0.031: reworded \\
+    Decomposition & One factor $\geq 2/3$ of the synthetic gain: name it; either factor moves sunlamp by $>2$ frozen s.d.: split the claim & Data 0.33, features 0.29 (53\%); largest sunlamp move 0.024 against 0.062: neither \\
+    Head sweep & Beats published seed 42 by $>2$ frozen s.d.: ``under-trained''; recovers $\geq 50\%$ of the layer-4 gain on a real domain: restate & 0.913 against 1.053: tuned head reported; real domains unmoved: finding stands \\
+    Synthetic-BN head & Share of the layer-4 gain recovered: $\geq 50\%$ / 0--50\% / $\leq 0$ & $-0.51$ (lightbox), $-0.27$ (sunlamp): ``not explained by normalisation statistics alone'' \\
+    AdaBN & Improved if 6/6 checkpoints share the sign; coverage $<80\%$: ``coverage stays low'' & $\Erot$ 6/6 on both domains; $\Etrans$ 5/6 lightbox, 6/6 sunlamp; coverage at most 40.4\% \\
+    Image statistics & Sunlamp clipped more than the full stack, and sharper than lightbox and the full stack; else two passages become hypotheses & Clipping holds (2.78\% vs 1.96\%); edge density fails (2.0\% vs 6.6\%, 10.7\%): passages reworded \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Extension (locked 30 Oct)}} \\
+    Frozen + aug & Synthetic aug $-$ no aug, 3/3 positive: keep ``the reference degrades''; sunlamp 3/3 negative and larger than lightbox: qualify the directional claim & $+0.169$, $+0.161$, $+0.134$: kept; sunlamp $-0.128$, $-0.069$, $-0.132$, larger than lightbox on every seed: qualified \\
+    Error shape & Near-$\pi$ share $\geq 0.28$ on all six: bimodal; body cone $\geq 0.18$ on all six and camera not: flips; reverse: in-plane & Near-$\pi$ 0.03--0.10: not bimodal; body cone $\geq 0.18$ on 2/6 per domain: neither \\
+    Range bins & Both in-domain translation patterns hold and the extreme bin excludes 90\%: keep; monotone but intervals include 90\%: soften; not monotone: cut & Ambiguous: ``monotone'' undefined. Near-to-far, both hold and the extreme bin excludes 90\% on 7/8 and 8/8; strictly over five bins, 3/8 and 2/8. Reported as near and far numbers \\
+    Ablation coverage & Coverage opposite to error on $\geq 5/6$ per domain: ``coverage mirrors error'' & 4/6 on each domain: not claimed \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Deviations and corrections.} Frozen augmented seeds 43 and 44 were pre-registered
+for this version but finished after the camera-ready's results freeze. Once their outcome was
+known they were added to the camera-ready anyway, the only result to cross the freeze. The
+range-bin rule also left ``monotone'' undefined, as Table~\ref{tab:prereg} notes.
+
+\paragraph{Not pre-registered.} Three results in the body were found or computed outside the
+pre-registration: the transfer plot (Fig.~\ref{fig:transfer}), AdaBN's effect on translation (Sec.~\ref{sec:bn}) and the collapse
+of sunlamp translation coverage with range (Sec.~\ref{sec:conformal}). Every point in the
+transfer plot had already been published.

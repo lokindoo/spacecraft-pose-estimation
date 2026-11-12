@@ -1,0 +1,57 @@
+\section{Revision experiments}
+\label{app:revision}
+
+All runs in this appendix were added after review and pre-registered: predictions and
+decision rules were written down and committed before any result was opened
+(App.~\ref{app:prereg}), and selection uses synthetic validation only, as in the body.
+
+\paragraph{Frozen-backbone block.} The frozen backbone runs in inference mode, so without
+augmentation its pooled features (and the ImageNet logits computed from them) can be cached
+once, and heads retrained on them in minutes. Applying the published seed-42 head to the
+cache reproduces its published errors to within $0.0005$. Table~\ref{tab:frozen} gives three
+seeds (42, 43, 44) for each configuration, all with the published head, loss and selection
+rule. The 4{,}000-image cells use one fixed draw from the 28{,}000, not the original
+4{,}000-image set. The tuned head is the best of learning rate $\{3{\times}10^{-4}, 10^{-3},
+3{\times}10^{-3}\}\times\{20, 60\}$ epochs on seed 42, chosen on synthetic validation. The
+synthetic-BN head re-estimates every BatchNorm layer on the un-augmented synthetic training
+images, with the weights untouched, before caching.
+
+
+\paragraph{Frozen backbone with augmentation.} Augmented inputs cannot use the feature cache,
+so seeds 43 and 44 of the frozen augmented arm were trained end to end with the released code
+on an Apple M5 GPU, while seed 42 is the published Colab run. Table~\ref{tab:frozenaug} pairs
+each seed with the head-only retrain of the same seed in the published configuration
+(Table~\ref{tab:frozen}), and their conformal coverage is in App.~\ref{app:conformal}.
+
+
+\paragraph{Augmentation ablation.} Arm A is the full stack without blur and noise. Arm B keeps
+only brightness and contrast jitter, gamma and random erasing (no glare blob, blur or noise).
+Both train layer 4 on seeds 42, 43 and 44 with the published configuration, and we read them
+as per-seed differences. They were trained with the released code on an Apple M5 GPU, whereas
+the published arms were trained on Colab. A control rerun of the full stack (seed 42) on the
+M5 differs from its published counterpart by $-0.053$, $+0.006$ and $-0.142$\,rad in $\Erot$
+(synthetic, lightbox, sunlamp). That is within seed variation, but on sunlamp it is as large
+as the ablation effects themselves.
+
+
+\paragraph{Test-time BatchNorm adaptation (AdaBN).} For each layer-4 checkpoint we
+re-estimate only layer 4's BatchNorm statistics, the ones fitted on synthetic data. We use
+the unlabelled images of one half of each real domain (a fixed random split by filename),
+leave every weight untouched, and evaluate on the other half (3{,}370 lightbox and 1{,}396
+sunlamp images), with each arm's published synthetic-calibrated $\hat{q}$ for coverage. This is
+test-time adaptation: it uses target images, though not their labels. The frozen arms are
+excluded, as all their statistics are ImageNet's.
+
+
+\paragraph{Image statistics.} Figure~\ref{fig:crops} compares pooled intensity densities,
+which cannot tell a soft bright blob from a hard edge. Table~\ref{tab:imagestats} adds spatial
+statistics, pooled over every image of each split after the same resize and grayscale
+conversion (augmentation seed 7, as in Figure~\ref{fig:crops}):
+\begin{itemize}[leftmargin=1.2em,itemsep=0pt,topsep=2pt]
+  \item the Sobel gradient magnitude, scaled so a full black-to-white step reads 1
+  \item edge density, the share of pixels whose gradient exceeds 0.1
+  \item the clipped fraction, the share of pixels at or above $254/255$
+  \item the total variation (TV) between pooled densities (48 intensity bins, 64 gradient
+  bins)
+\end{itemize}
+The intensity TV of the full stack reproduces Figure~\ref{fig:crops} ($0.63$, $0.80$).

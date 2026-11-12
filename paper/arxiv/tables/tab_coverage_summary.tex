@@ -1,0 +1,21 @@
+\begin{table}[ht]
+  \caption{Rotation coverage (\%) of the 90\% synthetic-calibrated cone, range over three seeds. AdaBN columns: after re-estimating layer 4's BatchNorm statistics on the other half of each real domain.}
+  \label{tab:coverage-summary}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{l c ccc cc}
+    \toprule
+    & & & & & \multicolumn{2}{c}{With AdaBN} \\
+    \cmidrule(lr){6-7}
+    Arm & $\hat{q}_R$ (rad) & In-domain & Lightbox & Sunlamp & Lightbox & Sunlamp \\
+    \midrule
+    frozen, no aug. & 2.16--2.30 & 88.7--90.0 & 63.6--71.0 & 53.4--59.1 & -- & -- \\
+    frozen, full stack & 2.37--2.42 & 88.7--91.1 & 75.1--76.3 & 69.8--71.0 & -- & -- \\
+    layer 4, no aug. & 0.46--0.54 & 88.8--89.7 & 21.5--26.7 & 9.0--12.9 & 23.9--29.3 & 11.2--14.5 \\
+    layer 4, full stack & 0.48--0.58 & 91.1--91.4 & 32.6--38.0 & 12.6--15.4 & 35.5--40.4 & 18.6--19.6 \\
+    layer 4, arm A & 0.54--0.56 & 89.2--90.5 & 31.8--33.9 & 16.0--18.7 & -- & -- \\
+    layer 4, arm B & 0.48--0.54 & 89.7--91.4 & 28.7--36.1 & 12.6--14.5 & -- & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}

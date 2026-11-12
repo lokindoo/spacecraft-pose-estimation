@@ -1,0 +1,20 @@
+\begin{table}[ht]
+  \caption{Main results: mean $\pm$ s.d.\ over seeds \{42, 43, 44\}. $\Etrans$ range-normalised, $\Erot$ in rad (chance level 2.207). Checkpoints are picked by best synthetic validation $\Erot$.}
+  \label{tab:results}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.4pt}
+  \begin{tabular}{ll cc cc cc}
+    \toprule
+    & & \multicolumn{2}{c}{Synthetic (val)} & \multicolumn{2}{c}{Lightbox} & \multicolumn{2}{c}{Sunlamp} \\
+    \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+    Backbone & Aug. & $\Etrans$ & $\Erot$ & $\Etrans$ & $\Erot$ & $\Etrans$ & $\Erot$ \\
+    \midrule
+    frozen$^{\dagger}$ & -- & $0.066{\pm}0.001$ & $1.044{\pm}0.009$ & $0.150{\pm}0.001$ & $1.763{\pm}0.024$ & $0.254{\pm}0.008$ & $2.004{\pm}0.049$ \\
+    frozen$^{\ddagger}$ & \checkmark & $0.073{\pm}0.002$ & $1.185{\pm}0.019$ & $0.121{\pm}0.005$ & $1.708{\pm}0.031$ & $0.304{\pm}0.024$ & $1.876{\pm}0.010$ \\
+    layer 4 & -- & $0.036{\pm}0.002$ & $0.317{\pm}0.010$ & $0.169{\pm}0.027$ & $1.166{\pm}0.018$ & $0.311{\pm}0.036$ & $1.534{\pm}0.075$ \\
+    layer 4 & \checkmark & $0.042{\pm}0.002$ & $0.322{\pm}0.027$ & $0.150{\pm}0.017$ & $\mathbf{0.987{\pm}0.010}$ & $0.355{\pm}0.081$ & $1.468{\pm}0.119$ \\
+    \bottomrule
+    \multicolumn{8}{@{}p{0.98\linewidth}@{}}{\scriptsize $^{\dagger}$Seed 42 trained end to end, and seeds 43, 44 retrain the head on cached features (App.~\ref{app:revision}). Table~\ref{tab:frozen} retrains all three, and the text quotes it. $^{\ddagger}$Seeds 43, 44 on an Apple M5. Per-seed rows: App.~\ref{app:perseed}.}\\
+  \end{tabular}
+\end{table}

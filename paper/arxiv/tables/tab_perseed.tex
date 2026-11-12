@@ -1,0 +1,51 @@
+\begin{table}[ht]
+  \caption{Per-seed results behind Table~\ref{tab:results}. $\Etrans$ range-normalised, $\Erot$ in rad (chance level 2.207). \emph{Head only}: the head retrained on cached frozen features.}
+  \label{tab:perseed}
+  \centering
+  \footnotesize
+  \begin{tabular}{ll c l l cc}
+    \toprule
+    Backbone & Aug. & Seed & Trained on & Domain & $\Etrans$ & $\Erot$ \\
+    \midrule
+    frozen & -- & 42 & Colab & synthetic (val) & 0.066 & 1.053 \\
+    frozen & -- & 42 & Colab & lightbox & 0.151 & 1.752 \\
+    frozen & -- & 42 & Colab & sunlamp & 0.253 & 2.048 \\
+    frozen & -- & 43 & head only & synthetic (val) & 0.064 & 1.045 \\
+    frozen & -- & 43 & head only & lightbox & 0.150 & 1.746 \\
+    frozen & -- & 43 & head only & sunlamp & 0.263 & 1.952 \\
+    frozen & -- & 44 & head only & synthetic (val) & 0.066 & 1.036 \\
+    frozen & -- & 44 & head only & lightbox & 0.148 & 1.791 \\
+    frozen & -- & 44 & head only & sunlamp & 0.246 & 2.013 \\
+    \midrule
+    frozen & \checkmark & 42 & Colab & synthetic (val) & 0.071 & 1.180 \\
+    frozen & \checkmark & 42 & Colab & lightbox & 0.118 & 1.718 \\
+    frozen & \checkmark & 42 & Colab & sunlamp & 0.306 & 1.864 \\
+    frozen & \checkmark & 43 & M5 & synthetic (val) & 0.073 & 1.205 \\
+    frozen & \checkmark & 43 & M5 & lightbox & 0.126 & 1.734 \\
+    frozen & \checkmark & 43 & M5 & sunlamp & 0.328 & 1.883 \\
+    frozen & \checkmark & 44 & M5 & synthetic (val) & 0.074 & 1.169 \\
+    frozen & \checkmark & 44 & M5 & lightbox & 0.118 & 1.673 \\
+    frozen & \checkmark & 44 & M5 & sunlamp & 0.279 & 1.881 \\
+    \midrule
+    layer 4 & -- & 42 & Colab & synthetic (val) & 0.039 & 0.306 \\
+    layer 4 & -- & 42 & Colab & lightbox & 0.200 & 1.169 \\
+    layer 4 & -- & 42 & Colab & sunlamp & 0.299 & 1.476 \\
+    layer 4 & -- & 43 & Colab & synthetic (val) & 0.035 & 0.326 \\
+    layer 4 & -- & 43 & Colab & lightbox & 0.152 & 1.182 \\
+    layer 4 & -- & 43 & Colab & sunlamp & 0.352 & 1.619 \\
+    layer 4 & -- & 44 & Colab & synthetic (val) & 0.035 & 0.318 \\
+    layer 4 & -- & 44 & Colab & lightbox & 0.154 & 1.147 \\
+    layer 4 & -- & 44 & Colab & sunlamp & 0.283 & 1.506 \\
+    \midrule
+    layer 4 & \checkmark & 42 & Colab & synthetic (val) & 0.041 & 0.352 \\
+    layer 4 & \checkmark & 42 & Colab & lightbox & 0.152 & 0.986 \\
+    layer 4 & \checkmark & 42 & Colab & sunlamp & 0.405 & 1.592 \\
+    layer 4 & \checkmark & 43 & Colab & synthetic (val) & 0.044 & 0.302 \\
+    layer 4 & \checkmark & 43 & Colab & lightbox & 0.165 & 0.997 \\
+    layer 4 & \checkmark & 43 & Colab & sunlamp & 0.399 & 1.354 \\
+    layer 4 & \checkmark & 44 & Colab & synthetic (val) & 0.042 & 0.311 \\
+    layer 4 & \checkmark & 44 & Colab & lightbox & 0.132 & 0.977 \\
+    layer 4 & \checkmark & 44 & Colab & sunlamp & 0.261 & 1.459 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

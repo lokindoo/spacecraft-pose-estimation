@@ -1,0 +1,20 @@
+\begin{table}[ht]
+  \caption{Pooled image statistics and total-variation distance to each real domain.}
+  \label{tab:imagestats}
+  \centering
+  \small
+  \begin{tabular}{l cc cc cc}
+    \toprule
+    & Edge & Clipped & \multicolumn{2}{c}{TV intensity} & \multicolumn{2}{c}{TV gradient} \\
+    \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+    Pool & density (\%) & (\%) & lightbox & sunlamp & lightbox & sunlamp \\
+    \midrule
+    lightbox & 6.6 & 0.08 & 0.00 & 0.28 & 0.00 & 0.22 \\
+    sunlamp & 2.0 & 2.78 & 0.28 & 0.00 & 0.22 & 0.00 \\
+    synthetic, no aug. & 10.9 & 0.07 & 0.68 & 0.83 & 0.07 & 0.26 \\
+    synthetic, full stack & 10.7 & 1.96 & 0.63 & 0.80 & 0.29 & 0.51 \\
+    synthetic, arm A & 9.6 & 2.62 & 0.65 & 0.81 & 0.10 & 0.33 \\
+    synthetic, arm B & 9.7 & 1.67 & 0.66 & 0.82 & 0.09 & 0.31 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
