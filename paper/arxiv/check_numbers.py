@@ -396,7 +396,7 @@ CLAIMS = [
                         - runs("unfrozen_aug", "sunlamp").to_numpy()), eps=0.001),
     Claim("3.2", r"shifts seed 42's sunlamp error by ${}$\,rad",
           lambda: (control.loc["sunlamp", "rotation"] - runs("unfrozen_aug", "sunlamp")[0],), eps=0.001),
-    Claim("3.2", r"clip less often than sunlamp ({}\% of pixels against {}\%)",
+    Claim("3.2", r"clip less often than sunlamp ({}\% of pixels against {}\%, Table~\ref{tab:imagestats})",
           lambda: (100 * stats.loc["synthetic, full stack", "clipped_fraction"], 100 * stats.loc["sunlamp", "clipped_fraction"]), eps=0.0),
     Claim("3.2", r"(edge density {}\%, against {}\% for lightbox and {}\% for the augmented stack)",
           lambda: tuple(100 * stats.loc[p, "edge_density"] for p in ("sunlamp", "lightbox", "synthetic, full stack")), eps=0.0),

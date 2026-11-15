@@ -319,7 +319,8 @@ of it, as Section~\ref{sec:asymmetry} does for data and features.
 
 \input{tables/tab_results}
 
-We start from our first frozen-backbone configuration: 4{,}000 training images, with the head
+Table~\ref{tab:results} gives the results of all four arms, but we start further back, from our
+first frozen-backbone configuration: 4{,}000 training images, with the head
 reading the backbone's 1{,}000-d ImageNet logits rather than its pooled features. Over three
 seeds, each head retrained on cached features, it reaches $\Erot = 1.651$\,rad on the
 2{,}000-image synthetic validation split, 1.962 on lightbox and 2.040 on sunlamp
@@ -352,7 +353,7 @@ degrades 3.8--5.2$\times$ ($S{=}0.353$ synthetic, 1.335 lightbox, 1.845 sunlamp)
 at the low end of the 2019 challenge's range, but it is not evidence of a smaller gap
 (Sec.~\ref{sec:discussion}).
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.85\linewidth]{figures/transfer.png}
   \caption{Synthetic against real rotation error for every configuration: frozen-backbone
@@ -407,7 +408,24 @@ error by $-0.142$\,rad, as much as the effects themselves.
 
 \input{tables/tab_ablation}
 
-\begin{figure}[t]
+\emph{Mechanism.} The stack models \emph{diffuse} illumination change: jitter and a soft,
+clamped blob simulate gentle, spatially smooth variation in lighting, which is what lightbox
+is. Sunlamp's collimated beam instead produces highlights off metal and foil, cast shadows, and
+\emph{clipped} regions where the sensor saturates. Because photometric jitter only brightens
+smoothly, the augmented images end up brighter overall than either real domain yet clip less
+often than sunlamp (2.0\% of pixels against 2.8\%, Table~\ref{tab:imagestats}). We expected blur, noise and the glare blob
+to work against sunlamp's sharp, bright structure. The ablation does not confirm this, and
+per-pixel gradients do not even show sunlamp as sharper, since most of its frame is dark
+(edge density 2.0\%, against 6.6\% for lightbox and 10.7\% for the augmented stack). What
+gradients do show is direction: un-augmented synthetic images are closer to lightbox than to
+sunlamp (gradient total variation 0.07 against 0.26), and the stack, mostly through blur and
+noise, pushes them away from both (0.29 and 0.51). Layer 4's BatchNorm statistics follow these
+augmented images, which fit neither real domain well and lightbox less badly
+(Fig.~\ref{fig:crops}), so augmentation pushed training towards the domain it was already least
+wrong about. Domain randomisation~\citep{tobin2017domainrand} helps where it brackets the
+target domain, but ours brackets neither and misses sunlamp by more.
+
+\begin{figure}[ht]
   \centering
   \begin{minipage}[c]{0.47\linewidth}
     \includegraphics[width=\linewidth]{figures/crops_triptych_poolall.png}
@@ -422,23 +440,6 @@ error by $-0.142$\,rad, as much as the effects themselves.
     \label{fig:crops}
   \end{minipage}
 \end{figure}
-
-\emph{Mechanism.} The stack models \emph{diffuse} illumination change: jitter and a soft,
-clamped blob simulate gentle, spatially smooth variation in lighting, which is what lightbox
-is. Sunlamp's collimated beam instead produces highlights off metal and foil, cast shadows, and
-\emph{clipped} regions where the sensor saturates. Because photometric jitter only brightens
-smoothly, the augmented images end up brighter overall than either real domain yet clip less
-often than sunlamp (2.0\% of pixels against 2.8\%). We expected blur, noise and the glare blob
-to work against sunlamp's sharp, bright structure. The ablation does not confirm this, and
-per-pixel gradients do not even show sunlamp as sharper, since most of its frame is dark
-(edge density 2.0\%, against 6.6\% for lightbox and 10.7\% for the augmented stack). What
-gradients do show is direction: un-augmented synthetic images are closer to lightbox than to
-sunlamp (gradient total variation 0.07 against 0.26), and the stack, mostly through blur and
-noise, pushes them away from both (0.29 and 0.51). Layer 4's BatchNorm statistics follow these
-augmented images, which fit neither real domain well and lightbox less badly
-(Fig.~\ref{fig:crops}), so augmentation pushed training towards the domain it was already least
-wrong about. Domain randomisation~\citep{tobin2017domainrand} helps where it brackets the
-target domain, but ours brackets neither and misses sunlamp by more.
 
 \input{tables/tab_imagestats}
 
@@ -493,6 +494,8 @@ rotation error on every layer-4 checkpoint, by 0.09\,rad on lightbox and 0.16 on
 average, yet rotation coverage reaches only 24--40\% and 11--20\% (Table~\ref{tab:adabn}). The
 cone was calibrated on synthetic errors, and adaptation leaves it where it was.
 
+\input{tables/tab_adabn}
+
 In the discrepancy-model reading of Sec.~\ref{sec:intro}, the augmentation stack is a guess at
 the simulator's error, and these results say where that guess enters the model. A frozen
 backbone sees the guess only through what its head learns. An adapted one also absorbs it into
@@ -507,7 +510,6 @@ far targets much too close and is also why translation coverage collapses with r
 (Sec.~\ref{sec:conformal}). No fixed position scores below 0.33 there, even one fitted to
 sunlamp's own labels, so after adaptation the models read range from the image again.
 
-\input{tables/tab_adabn}
 
 % =========================================================================
 \section{The model does not know it is failing}
@@ -545,7 +547,7 @@ lightbox and 11--20\% on sunlamp.
 
 \input{tables/tab_coverage_summary}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \begin{minipage}[c]{0.37\linewidth}
     \includegraphics[width=\linewidth]{figures/reliability_unfrozen_no_aug_seeds_rotation.png}
@@ -572,7 +574,7 @@ rotation coverage stays at 7.1--11.6\% throughout, and App.~\ref{app:range} give
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/coverage_by_range_unfrozen_no_aug.png}
+  \includegraphics[width=0.85\linewidth]{figures/coverage_by_range_unfrozen_no_aug.png}
   \caption{Coverage of the marginal 90\% region within each range bin (quintiles of the
   calibration split's range) for the layer-4 arm without augmentation: mean over three seeds,
   range shaded. Dashed: nominal.}
