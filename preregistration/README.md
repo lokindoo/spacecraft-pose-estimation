@@ -35,7 +35,8 @@ The arXiv-extension results were opened on Fri 30 Oct at 13:36, straight after
   for example the frozen + aug seed-42 result that the arXiv §1 prediction is
   about.
 - **Not pre-registered:** the items under "Not pre-registered" at the end of
-  the arXiv file, and anything the paper labels exploratory.
+  the arXiv file, and the three results the arXiv version's pre-registration
+  appendix lists as not pre-registered.
 - **Outcomes:** each decision rule's outcome is reported in the arXiv version's
   pre-registration appendix.
 

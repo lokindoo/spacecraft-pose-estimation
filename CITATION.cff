@@ -29,6 +29,11 @@ identifiers:
       The code at tag sim2science-2026-camera-ready, behind the workshop
       version.
   - type: doi
+    value: 10.5281/zenodo.24264939
+    description: >-
+      The code at tag arxiv-v1, behind the extended version
+      (arXiv:2611.20321).
+  - type: doi
     value: 10.5281/zenodo.24140385
     description: >-
       The 17 trained checkpoints, with their model card. Licensed CC BY 4.0,
@@ -41,20 +46,22 @@ keywords:
   - conformal prediction
   - SPEED+
 
-# TODO once arXiv is live: fill in the identifier and uncomment.
-# preferred-citation:
-#   type: article
-#   title: >-
-#     Unreasonable Confidence from Simulator Misspecification: Directional
-#     Robustness on the SPEED+ Sim-to-Real Benchmark
-#   authors:
-#     - given-names: Nikolay
-#       family-names: Dolgov
-#   year: 2026
-#   identifiers:
-#     - type: other
-#       value: "arXiv:XXXX.XXXXX"
-#   url: "https://arxiv.org/abs/XXXX.XXXXX"
+preferred-citation:
+  type: article
+  title: >-
+    Unreasonable Confidence from Simulator Misspecification: Directional
+    Robustness on the SPEED+ Sim-to-Real Benchmark
+  authors:
+    - given-names: Nikolay
+      family-names: Dolgov
+      orcid: "https://orcid.org/0009-0000-2699-5315"
+  year: 2026
+  month: 11
+  doi: 10.48550/arXiv.2611.20321
+  url: "https://arxiv.org/abs/2611.20321"
+  identifiers:
+    - type: other
+      value: "arXiv:2611.20321"
 
 references:
   - type: article

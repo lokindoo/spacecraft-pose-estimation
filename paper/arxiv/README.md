@@ -1,7 +1,8 @@
 # arXiv version: source and number ledger
 
-The LaTeX source of the extended version as submitted to arXiv, with the
-compiled [article.pdf](article.pdf), the script that writes its tables, and the
+The LaTeX source of the extended version as submitted to arXiv
+([arXiv:2611.20321](https://arxiv.org/abs/2611.20321)), with the compiled
+[article.pdf](article.pdf), the script that writes its tables, and the
 script that checks every number in it against [`results/`](../../results/).
 
 ## Check the numbers

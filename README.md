@@ -9,12 +9,13 @@ the direction you augmented, and the model's confidence gives no warning.
 **Paper.** Nikolay Dolgov. *Unreasonable Confidence from Simulator
 Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark.*
 Sim2Science: ML with Imperfect Scientific Models, workshop at NeurIPS 2026.
+Extended version: [arXiv:2611.20321](https://arxiv.org/abs/2611.20321).
 
 | Version | Code and results | Paper source |
 |---|---|---|
 | Sim2Science 2026, camera-ready | tag [`sim2science-2026-camera-ready`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026-camera-ready) | [`paper/sim2science-2026/`](paper/sim2science-2026/) |
 | Sim2Science 2026, as first submitted | tag [`sim2science-2026`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/sim2science-2026) | |
-| Extended version (arXiv) | tag [`arxiv-v1`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/arxiv-v1) | [`paper/arxiv/`](paper/arxiv/) |
+| Extended version, [arXiv:2611.20321](https://arxiv.org/abs/2611.20321) | tag [`arxiv-v1`](https://github.com/lokindoo/spacecraft-pose-estimation/tree/arxiv-v1) | [`paper/arxiv/`](paper/arxiv/) |
 
 `main` moves on with the extended version; the tags stay fixed. Every number in
 each paper is checked against [`results/`](results/) by the `check_numbers.py`
@@ -24,10 +25,9 @@ in its source folder,
 post-review experiments are in
 [`preregistration/`](preregistration/).
 
+[![arXiv](https://img.shields.io/badge/arXiv-2611.20321-b31b1b.svg)](https://arxiv.org/abs/2611.20321)
 [![Code DOI](https://img.shields.io/badge/code_DOI-10.5281%2Fzenodo.24011140-blue)](https://doi.org/10.5281/zenodo.24011140)
 [![Weights DOI](https://img.shields.io/badge/weights_DOI-10.5281%2Fzenodo.24140385-blue)](https://doi.org/10.5281/zenodo.24140385)
-<!-- TODO once arXiv is live:
-     [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX) -->
 
 ---
 
@@ -515,7 +515,19 @@ archives unpack to local disk rather than being read across the mount.
 
 ## Citation
 
-See [CITATION.cff](CITATION.cff). The model weights are on Zenodo,
+```bibtex
+@article{dolgov2026unreasonable,
+  title   = {Unreasonable Confidence from Simulator Misspecification: Directional
+             Robustness on the {SPEED+} Sim-to-Real Benchmark},
+  author  = {Dolgov, Nikolay},
+  journal = {arXiv preprint arXiv:2611.20321},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2611.20321}
+}
+```
+
+[CITATION.cff](CITATION.cff) has the same, with the DOIs of each archived
+release. The model weights are on Zenodo,
 [10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385), with their
 card in [model_card.md](model_card.md).
 
