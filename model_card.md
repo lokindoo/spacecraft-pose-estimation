@@ -1,3 +1,17 @@
+---
+license: cc-by-4.0
+library_name: pytorch
+tags:
+  - spacecraft-pose-estimation
+  - pose-estimation
+  - 6d-pose-estimation
+  - sim-to-real
+  - domain-shift
+  - conformal-prediction
+  - speedplus
+  - resnet-50
+---
+
 # SPEED+ Pose Estimator — sim-to-real study checkpoints
 
 Direct 6DoF pose regression (ResNet-50 + MLP head) trained only on synthetic
@@ -11,11 +25,16 @@ The study itself reproduces without the weights; see the repository.
 These are not competitive weights. They are the experimental arms of a study,
 and exist so that its table can be regenerated rather than taken on trust.
 
-Weights, on Zenodo:
-https://doi.org/10.5281/zenodo.24140385
+Paper: Nikolay Dolgov, *Unreasonable Confidence from Simulator
+Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark*,
+[arXiv:2611.20321](https://arxiv.org/abs/2611.20321).
 
 Code, configs and the reproduction script:
 https://github.com/lokindoo/spacecraft-pose-estimation
+
+These files are a mirror of the archived, citable copy on Zenodo:
+[10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385). The two
+hold byte-identical files; cite the DOI.
 
 ## Checkpoints
 
@@ -23,10 +42,17 @@ The selection rule, applied uniformly, is the checkpoint with the best
 synthetic validation rotation error among those saved on even epochs. No
 real-domain measurement informed the choice.
 
-`SHA256SUMS`, next to the weights on Zenodo, lists each file's hash. The same
-hashes appear in `results/checkpoints.json`, whose `checkpoint` field gives
-each file's original name from training. The repository's scripts accept
+`SHA256SUMS`, next to the weights here and on Zenodo, lists each file's hash.
+The same hashes appear in `results/checkpoints.json`, whose `checkpoint` field
+gives each file's original name from training. The repository's scripts accept
 either name.
+
+To download all seventeen into one directory and regenerate the results table:
+
+```bash
+hf download lkid08/spacecraft-pose-estimation --local-dir checkpoints
+python scripts/reproduce_table.py --from-checkpoints checkpoints
+```
 
 ### Results table
 
@@ -78,14 +104,19 @@ the rest on Colab.
 
 ## Inference
 
+The model code is in the repository:
+`pip install git+https://github.com/lokindoo/spacecraft-pose-estimation`.
+
 ```python
 import torch
+from huggingface_hub import hf_hub_download
 from PIL import Image
 from speedplus_pose.model import SpacecraftPoseEstimator
 from speedplus_pose.normalisation import TranslationNormaliser
 from speedplus_pose.transforms import build_eval_transform
 
-checkpoint = torch.load("unfrozen_aug_seed42.pt", weights_only=False, map_location="cpu")
+path = hf_hub_download("lkid08/spacecraft-pose-estimation", "unfrozen_aug_seed42.pt")
+checkpoint = torch.load(path, weights_only=False, map_location="cpu")
 
 model = SpacecraftPoseEstimator()
 model.load_state_dict(checkpoint["model_state_dict"])
@@ -169,5 +200,16 @@ SPEED+ itself is not redistributed here, in any form.
 
 ## Citation
 
-See `CITATION.cff` in the repository. Cite the SPEED+ dataset (Park et al., 2022)
-alongside this work.
+```bibtex
+@article{dolgov2026unreasonable,
+  title   = {Unreasonable Confidence from Simulator Misspecification: Directional
+             Robustness on the {SPEED+} Sim-to-Real Benchmark},
+  author  = {Dolgov, Nikolay},
+  journal = {arXiv preprint arXiv:2611.20321},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2611.20321}
+}
+```
+
+`CITATION.cff` in the repository has the same, with the DOIs of each archived
+release. Cite the SPEED+ dataset (Park et al., 2022) alongside this work.

@@ -14,13 +14,15 @@
     "",
     "`sha256` lets a reproducer check they have the same weights. The weights are",
     "on Zenodo (`weights` below), each published as `<key>.pt`; `checkpoint` is",
-    "the file's name from training. The scripts accept either name."
+    "the file's name from training. The scripts accept either name. `mirror` holds",
+    "the same files on Hugging Face; cite the DOI."
   ],
   "study": "Unreasonable Confidence from Simulator Misspecification: Directional Robustness on the SPEED+ Sim-to-Real Benchmark",
   "selection_metric": "synthetic validation rotation error",
   "weights": {
     "doi": "10.5281/zenodo.24140385",
-    "url": "https://doi.org/10.5281/zenodo.24140385"
+    "url": "https://doi.org/10.5281/zenodo.24140385",
+    "mirror": "https://huggingface.co/lkid08/spacecraft-pose-estimation"
   },
   "arms": {
     "frozen_no_aug_seed42": {

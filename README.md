@@ -28,6 +28,7 @@ post-review experiments are in
 [![arXiv](https://img.shields.io/badge/arXiv-2611.20321-b31b1b.svg)](https://arxiv.org/abs/2611.20321)
 [![Code DOI](https://img.shields.io/badge/code_DOI-10.5281%2Fzenodo.24011140-blue)](https://doi.org/10.5281/zenodo.24011140)
 [![Weights DOI](https://img.shields.io/badge/weights_DOI-10.5281%2Fzenodo.24140385-blue)](https://doi.org/10.5281/zenodo.24140385)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97_weights-lkid08%2Fspacecraft--pose--estimation-yellow)](https://huggingface.co/lkid08/spacecraft-pose-estimation)
 
 ---
 
@@ -364,10 +365,19 @@ It re-runs inference for all eight arms, rebuilds Table 1, and diffs it against
 
 > **The weights are on Zenodo:**
 > [10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385), with
-> their card in [model_card.md](model_card.md). Download them into one
-> directory and pass it as `<checkpoint-dir>`. Their `SHA256SUMS` matches
-> `results/checkpoints.json`, which records which run each published row came
-> from.
+> their card in [model_card.md](model_card.md). Hugging Face mirrors the same
+> files at
+> [lkid08/spacecraft-pose-estimation](https://huggingface.co/lkid08/spacecraft-pose-estimation),
+> which is the quickest way to fetch them all:
+>
+> ```bash
+> hf download lkid08/spacecraft-pose-estimation --local-dir checkpoints
+> python scripts/reproduce_table.py --from-checkpoints checkpoints
+> ```
+>
+> From Zenodo, download them into one directory and pass it as
+> `<checkpoint-dir>`. Their `SHA256SUMS` matches `results/checkpoints.json`,
+> which records which run each published row came from.
 > Everything else reproduces from this repository alone: the results CSVs, the
 > conformal analysis, the constant-pose baseline, and both paper figures.
 
@@ -529,7 +539,9 @@ archives unpack to local disk rather than being read across the mount.
 [CITATION.cff](CITATION.cff) has the same, with the DOIs of each archived
 release. The model weights are on Zenodo,
 [10.5281/zenodo.24140385](https://doi.org/10.5281/zenodo.24140385), with their
-card in [model_card.md](model_card.md).
+card in [model_card.md](model_card.md). Cite that DOI for the weights; the
+[Hugging Face copy](https://huggingface.co/lkid08/spacecraft-pose-estimation)
+is a mirror of the same files.
 
 ## Licence
 
