@@ -115,7 +115,9 @@ from speedplus_pose.model import SpacecraftPoseEstimator
 from speedplus_pose.normalisation import TranslationNormaliser
 from speedplus_pose.transforms import build_eval_transform
 
-path = hf_hub_download("lkid08/spacecraft-pose-estimation", "unfrozen_aug_seed42.pt")
+repo = "lkid08/spacecraft-pose-estimation"
+hf_hub_download(repo, "config.json")   # the file the Hub counts downloads by
+path = hf_hub_download(repo, "unfrozen_aug_seed42.pt")
 checkpoint = torch.load(path, weights_only=False, map_location="cpu")
 
 model = SpacecraftPoseEstimator()
